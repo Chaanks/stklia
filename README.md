@@ -45,14 +45,15 @@ In a classic scenario, this classifier is usually a feed forward network which p
 
 ### Speaker
 An example .cfg file for speaker training is provided below and in configs/example_speaker.cfg:
-<!-- 
+
 ```ini
 [Datasets]
-train = $KALDI_PATH/egs/voxceleb/v2/data/train_combined_no_sil
-test = $KALDI_PATH/egs/voxceleb/v2/data/voxceleb1_nosil #OPTIONAL
+train = path/to/kaldi/train/data/
+test = path/to/kaldi/test/data/ #optional during training 
+trials = path/to/trials/file    #optional during training 
 ```
 
-These are the locations of the datasets. test is **OPTIONAL** field. If they are not included in the config file, no evaluation is done during training. -->
+These are the locations of the datasets. test is **OPTIONAL** field. If they are not included in the config file, no evaluation is done during training.
 
 ```ini
 [Hyperparams]
@@ -73,7 +74,6 @@ Most of these configurable hyper-parameters are fairly self-explanatory.
 
 ```ini
 [Outputs]
-
 model_dir = exp/example_exp_speaker # place where models are stored
 checkpoint_interval = 10 # Interval to save models and also evaluate
 checkpoints_dir = checkpoints # checkpoints will be stored in <model_dir>/<checkpoints_dir>/
