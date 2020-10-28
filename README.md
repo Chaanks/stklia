@@ -57,7 +57,7 @@ These are the locations of the datasets. test is **OPTIONAL** field. If they are
 ```ini
 [Hyperparams]
 lr = 0.2
-batch_size = 500 # must be less than num_classes
+batch_size = 128 # must be less than num_classes
 max_seq_len = 400
 no_cuda = False
 seed = 1234
