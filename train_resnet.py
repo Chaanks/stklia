@@ -78,8 +78,7 @@ def train(args, dataloader_train, dataset_validation=None):
     
     running_loss = [np.nan for _ in range(500)] # loss hisotry per iteration
     if dataset_validation is not None:
-        trials = dataset_validation.trials
-        best_eer = {v.name:{'eer':1, 'ite':-1} for v in trials} # best eer of all iterations
+        best_eer = {v.name:{'eer':1, 'ite':-1} for v in dataset_validation.trials} # best eer of all iterations
 
     start = time.process_time()
     for iterations in range(0, args.num_iterations + 1):
@@ -147,7 +146,7 @@ def train(args, dataloader_train, dataset_validation=None):
             # Testing the saved model
             if dataset_validation is not None:
                 logger.info('Model Evaluation')
-                test_res = score_utt_utt(generator, dataset_validation, trials, device)
+                test_res = score_utt_utt(generator, dataset_validation, device)
                 for veri_pair, res in test_res.items():
                     eer = res['eer']
                     logger.info(f'EER on {veri_pair}: {eer}')
@@ -175,6 +174,8 @@ if __name__ == "__main__":
     args.output_dir.mkdir(parents=True, exist_ok=True)
     args.checkpoints_dir.mkdir(exist_ok=True)
 
+    # TODO: resume checkpoint
+
     if args.log_file.exists():
         args.log_file.unlink()
     logger.add(args.log_file, format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}", backtrace=False, diagnose=False)
@@ -182,9 +183,13 @@ if __name__ == "__main__":
     torch.manual_seed(args.seed)
     np.random.seed(seed=args.seed)
 
-    ds_train = dataset.kaldi_fbank_voxceleb2_ds()
+    #TODO: support pytorch dataset
+    ds_train = dataset.make_kaldi_ds(args.train_data_path, seq_len=args.max_seq_len, evaluation=False, trials=None)
     dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True)
 
-    ds_val = dataset.kaldi_fabiol_ds(feat="mfcc")
+    if args.test_data_path and args.trials_path:
+        ds_val = dataset.make_kaldi_ds(args.train_data_path, seq_len=args.max_seq_len, evaluation=True, trials=args.trials_path)
+    else:
+        ds_val = None
 
     train(args, dl_train, ds_val)

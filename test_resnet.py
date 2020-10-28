@@ -111,11 +111,12 @@ def compute_min_dcf(fpr, tpr, thresholds, p_target=0.01, c_miss=1, c_fa=1):
     min_dcf = min_c_det / c_def
     return min_dcf
 
-def score_utt_utt(generator, ds_test, trials, device, mindcf=False):
+def score_utt_utt(generator, ds_test, device, mindcf=False):
     """ 
         Score the model on the trials of type :
         <spk> <utt> 0/1
     """
+    trials = ds_test.trials
     if not isinstance(trials, list):
         trials = [trials]
 
@@ -205,16 +206,12 @@ if __name__ == "__main__":
         g_path = args.checkpoints_dir / "g_{}.pt".format(args.checkpoint)
         g_path_test = g_path
 
+    # TODO: choose model type from cfg
     model = resnet34(256)
     model.load_state_dict(torch.load(g_path), strict=False)
     model = model.to(device)
 
-    # Test on fabiol w/ 1-7 trials
-    # Enroll dataset
-    ds_enroll, ds_test, trials_path = dataset.kaldi_fabiol17_ds(feat="mfcc")
-    score_spk_utt(model, ds_enroll, ds_test, trials_path, device)
+    assert args.test_data_path != None and args.trials_path != None, f"No test or trials specified in {args.cfg}"
+    ds_val = dataset.make_kaldi_ds(args.train_data_path, seq_len=args.max_seq_len, evaluation=True, trials=args.trials_path)
 
-    # Test on fabiol w/ a-b trials
-    ds, trials_path = dataset.kaldi_fabiol_ds(feat="mfcc")
-    score_utt_utt(model, ds, trials_path, device)
-
+    score_utt_utt(model, ds_val, device)

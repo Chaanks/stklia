@@ -54,12 +54,17 @@ def fetch_args_and_config(verbose=0):
     args.scheduler_steps     = np.array(json.loads(config.get('Hyperparams', 'scheduler_steps'))).astype(int)
     args.scheduler_lambda    = config['Hyperparams'].getfloat('scheduler_lambda', fallback=0.5)
     args.multi_gpu           = config['Hyperparams'].getboolean('multi_gpu', fallback=False)
-    args.classifier_lr_mult  = config['Hyperparams'].getfloat('classifier_lr_mult', fallback=1.)
+
+    args.train_data_path     = Path(config['Dataset']['train'])
+    try:
+        args.test_data_path  = Path(config['Dataset']['test'])
+        args.trials_path     = Path(config['Dataset']['trials'])
+    except KeyError:
+        args.test_data_path  = None
+        args.trials_path     = None
 
     try:
         args.model_dir           = Path(config['Inputs']['model_dir'])
-        args.trained_gen_path    = check_file_exist(Path(config['Inputs']['trained_gen']))
-        args.trained_class_path  = check_file_exist(Path(config['Inputs']['trained_class']))
     except KeyError:
         pass
 

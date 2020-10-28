@@ -151,6 +151,7 @@ def make_pytorch_ds(utt_list, utt2path_func, seq_len=400, evaluation=False, tria
     )
     return ds
 
+#TODO: remove make_kaldi_ds_from_mul_path and add the feature in this make_kaldi_ds function
 def make_kaldi_ds(ds_path, seq_len=400, evaluation=False, trials=None):
     """ 
     Make a SpeakerDataset from only the path of the kaldi dataset.
@@ -207,6 +208,10 @@ def make_kaldi_ds_from_mul_path(ds_paths, seq_len=400, evaluation=False, trials=
     return ds
 
 # Premade datasets :
+## These dataset are the one we (Jarod and Vincent) use most of the time
+## The path to the data are hardcoded
+## I leave it there because it may inspire you or just be usefull.
+## ;*
 def kaldi_fbank_voxceleb2_ds():
     ds = make_kaldi_ds(
         Path("/local_disk/arges/jduret/kaldi/egs/voxceleb/fbank/data/train_combined_no_sil"), 
