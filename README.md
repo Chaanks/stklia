@@ -31,19 +31,19 @@ pip install -r requirements.txt
 The training is handled with train_resnet.py. The script is run with a .cfg file as input like so:
 
 ```sh
-python train_resnet.py --cfg config/example_speaker.cfg
+python run.py --mode train --cfg config/example_speaker.cfg
 ```
 
 In order to resume an experiment from an existing checkpoint interval:
 
 ```sh
-python train_resnet.py --cfg config/example_speaker.cfg --resume-checkpoint 1000
+python run.py --mode train --cfg config/example_speaker.cfg --resume-checkpoint 1000
 ```
 
 ### Test a model
 
 ```sh
-python test_resnet.py --cfg config/example_speaker.cfg --checkpoint 1250
+python run.py --mode test --cfg config/example_speaker.cfg --checkpoint 1250
 ```
 
 <!-- 
@@ -52,7 +52,7 @@ python test_resnet.py --cfg config/example_speaker.cfg --checkpoint 1250
 The extraction is handled within `extract_xvectors.py`. The script is run with a .cfg file as input like so:
 
 ```sh
-python extract_xvectors.py --cfg config/example_speaker.cfg
+python run.py --mode extract --cfg config/example_speaker.cfg
 ``` 
 -->
 

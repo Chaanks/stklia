@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+run.py: This file is used as a launcher to train or test the resnet.
+"""
+
+__author__ = "Duret Jarod, Brignatz Vincent"
+__license__ = "MIT"
 
 import time
 import numpy as np
