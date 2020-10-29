@@ -198,7 +198,7 @@ if __name__ == "__main__":
     device = get_device(not args.no_cuda)
 
     # Load model
-    if args.checkpoint == -1:
+    if args.checkpoint < 0:
         g_path = args.model_dir / "final_g_{}.pt".format(args.num_iterations)
         g_path_test = g_path
     else:

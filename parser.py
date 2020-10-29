@@ -28,8 +28,8 @@ def fetch_args_and_config(verbose=0):
     parser = argparse.ArgumentParser(description='Train and test of ResNet for speaker verification')
 
     parser.add_argument('--cfg', type=str, help="Path to a config file")
-    parser.add_argument('--checkpoint', '--resume-checkpoint', type=int, default=-1, # which model to use, overidden by 'best'
-                            help='Use model checkpoint, default -1 uses final model')
+    parser.add_argument('--checkpoint', '--resume-checkpoint', type=int, default=-2,
+                            help="Model Checkpoint to use.\n\t[TEST] default : use the last one\n\t[TRAIN] default : None used, -1 use the last one")
 
     args = parser.parse_args()
     # Check that there is a config file
@@ -63,14 +63,9 @@ def fetch_args_and_config(verbose=0):
         args.test_data_path  = None
         args.trials_path     = None
 
-    try:
-        args.model_dir           = Path(config['Inputs']['model_dir'])
-    except KeyError:
-        pass
-
-    args.output_dir          = Path(config['Outputs']['output_dir'])
-    args.checkpoints_dir     = args.output_dir / 'checkpoints/'
-    args.log_file            = args.output_dir / 'train.log'
+    args.model_dir           = Path(config['Outputs']['model_dir'])
+    args.checkpoints_dir     = args.model_dir / 'checkpoints/'
+    args.log_file            = args.model_dir / 'train.log'
     args.checkpoint_interval = config['Outputs'].getint('checkpoint_interval')
     args.log_interval        = config['Outputs'].getfloat('log_interval', fallback=100)
 
