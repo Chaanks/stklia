@@ -55,10 +55,10 @@ def fetch_args_and_config(verbose=0):
     args.scheduler_lambda    = config['Hyperparams'].getfloat('scheduler_lambda', fallback=0.5)
     args.multi_gpu           = config['Hyperparams'].getboolean('multi_gpu', fallback=False)
 
-    args.train_data_path     = Path(config['Dataset']['train'])
+    args.train_data_path     = [Path(p) for p in config['Dataset']['train'].split()]
     try:
-        args.test_data_path  = Path(config['Dataset']['test'])
-        args.trials_path     = Path(config['Dataset']['trials'])
+        args.test_data_path  = [Path(p) for p in config['Dataset']['test'].split()]
+        args.trials_path     = [Path(p) for p in config['Dataset']['trial'].split()]
     except KeyError:
         args.test_data_path  = None
         args.trials_path     = None
@@ -78,3 +78,6 @@ def fetch_args_and_config(verbose=0):
         pprint(vars(args))
 
     return args
+
+if __name__ == "__main__":
+    args = fetch_args_and_config(1)

@@ -188,7 +188,7 @@ if __name__ == "__main__":
     dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True)
 
     if args.test_data_path and args.trials_path:
-        ds_val = dataset.make_kaldi_ds(args.train_data_path, seq_len=args.max_seq_len, evaluation=True, trials=args.trials_path)
+        ds_val = dataset.make_kaldi_ds(args.test_data_path, seq_len=args.max_seq_len, evaluation=True, trials=args.trials_path)
     else:
         ds_val = None
 

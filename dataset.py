@@ -112,6 +112,9 @@ class SpeakerDataset(Dataset):
         self.trials = trials
         # assert (self.trials == None) and (evaluation == True), "No trials given while on eval mode"
 
+    def __repr__(self):
+        return f"SpeakerDataset w/ {len(self.spk2utt)} speakers and {len(self.utt2spk)} sessions. eval={self.evaluation}"
+
     def __len__(self):
         if self.evaluation:
             return len(self.utt_list)
@@ -158,44 +161,21 @@ def make_kaldi_ds(ds_path, seq_len=400, evaluation=False, trials=None):
     This function will use the files 'feats.scp', 'utt2spk' 'spk2utt'
     present in ds_path to create the SpeakerDataset.
     """
-    ds = SpeakerDataset(
-        utt2path = read_scp(ds_path / 'feats.scp'),
-        utt2spk  = read_scp(ds_path / 'utt2spk'),
-        spk2utt  = load_one_tomany(ds_path / 'spk2utt'),
-        loading_method = lambda path: torch.FloatTensor(read_mat(path)),
-        seq_len  = seq_len,
-        evaluation = evaluation,
-        trials=trials,
-    )
-    return ds
-
-def make_kaldi_ds_from_mul_path(ds_paths, seq_len=400, evaluation=False, trials=None):
-    """ 
-    Make a single SpeakerDataset from multiple kaldi paths.
-    For now, only support 2 paths.
-    """
-    # TODO: support more than 2 paths
-    assert len(ds_paths) == 2, "only support 2 paths for now..."
+    if not isinstance(ds_path, list):
+        ds_path = [ds_path]
     
-    path0 = ds_paths[0]
-    path1 = ds_paths[1]
+    utt2spk, spk2utt, utt2path = {}, {}, {}
+    for i, path in enumerate(ds_path):
+        utt2path.update(read_scp(path / 'feats.scp'))
+        utt2spk.update(read_scp(path / 'utt2spk'))
+        # can't do spk2utt.update(t_spk2utt) as update is not additive
+        t_spk2utt = load_one_tomany(path / 'spk2utt')
+        for spk, utts in t_spk2utt.items():
+            try:
+                spk2utt[spk] += utts
+            except KeyError:
+                spk2utt[spk] = utts
 
-    utt2path = read_scp(path1 / 'feats.scp')
-    utt2path.update(read_scp(path0 / 'feats.scp'))
-
-    utt2spk = read_scp(path1 / 'utt2spk')
-    utt2spk.update(read_scp(path0 / 'utt2spk'))
-
-    spk2utt = load_one_tomany(path1 / 'spk2utt')
-    t_spk2utt = load_one_tomany(path0 / 'spk2utt')
-    # can't do spk2utt.update(t_spk2utt) as update is not additive
-    for spk, utts in t_spk2utt.items():
-        try:
-            spk2utt[spk] += utts
-        except KeyError:
-            print(f"no spk '{spk}'")
-            spk2utt[spk] = utts
-    
     ds = SpeakerDataset(
         utt2path = utt2path,
         utt2spk  = utt2spk,
@@ -207,85 +187,8 @@ def make_kaldi_ds_from_mul_path(ds_paths, seq_len=400, evaluation=False, trials=
     )
     return ds
 
-# Premade datasets :
-## These dataset are the one we (Jarod and Vincent) use most of the time
-## The path to the data are hardcoded
-## I leave it there because it may inspire you or just be usefull.
-## ;*
-def kaldi_fbank_voxceleb2_ds():
-    ds = make_kaldi_ds(
-        Path("/local_disk/arges/jduret/kaldi/egs/voxceleb/fbank/data/train_combined_no_sil"), 
-        seq_len=400,
-        evaluation=False
-    )
-    return ds
-
-def kaldi_mfcc_voxceleb2_ds():
-    ds = make_kaldi_ds(
-        Path("/local_disk/arges/jduret/kaldi/egs/voxceleb/v2/data/train_combined_no_sil"), 
-        seq_len=400,
-        evaluation=False
-    )
-    return ds
-
-def kaldi_fbank_cvoicefr(corpus="train"):
-    assert corpus in ["train", "dev", "test"], "No such corpus {corpus} in lia cvoice fr"
-    ds = make_kaldi_ds(
-        Path(f"/local_disk/arges/jduret/kaldi/egs/lia_cv_fr/fbank/data/lia-cvoice-fr/{corpus}_no_sil"), 
-        seq_len=400,
-        evaluation=False
-    )
-    return ds
-
-def pt_mfcc_voxceleb2_ds():
-    """  """
-    utt_list = read_utt_list("/users/matrouf/exp_with_pytorch/entrepie/pytorch-data-generator-master/pytorch-data-generator-master_dup_bis_61_plusgrand/all_R_aug_clean.lst")
-    utt2path_func = lambda utt: f"/local_disk/alpos/robovox/Aran/VOXCELEB_Aug_Clean_py/{utt}.pt"
-    ds = make_pytorch_ds(utt_list, utt2path_func, seq_len=300, evaluation=False)
-    return ds
-
-def kaldi_fabiol_ds(feat="mfcc"):
-    if feat == "fbank":
-        feat = "" 
-    elif feat == "mfcc":
-        feat = "_mfcc"
-    else:
-        print("'feat' sould be 'mfcc' or 'fbank'")
-        raise KeyError
-    ds = make_kaldi_ds_from_mul_path(
-        [
-            Path(f'/local_disk/arges/jduret/kaldi/egs/fabiol/v2/data/fabiol_test{feat}_no_sil'),
-            Path(f'/local_disk/arges/jduret/kaldi/egs/fabiol/v2/data/fabiol_enroll{feat}_no_sil')
-        ],
-        evaluation=True,
-        seq_len=None,
-        trials=[Path(f'/local_disk/arges/jduret/kaldi/egs/fabiol/v2/trials/veri_pairs_{i}') for i in ['a', 'b']],
-    )
-
-    return ds
-
-def kaldi_fabiol17_ds(feat="mfcc"):
-    if feat == "fbank":
-        feat = "" 
-    elif feat == "mfcc":
-        feat = "_mfcc"
-    else:
-        print("'feat' sould be 'mfcc' or 'fbank'")
-        raise KeyError
-    t = [Path(f'/local_disk/arges/jduret/kaldi/egs/fabiol/v2/trials/veri_pairs_{i}') for i in range(1, 8)],
-    ds_enroll = make_kaldi_ds(
-        Path(f'/local_disk/arges/jduret/kaldi/egs/fabiol/v2/data/fabiol_enroll{feat}_no_sil'), 
-        evaluation=True,
-        seq_len=None,
-        trials=t,
-    )
-
-    # Test dataset
-    ds_test = make_kaldi_ds(
-        Path(f'/local_disk/arges/jduret/kaldi/egs/fabiol/v2/data/fabiol_test{feat}_no_sil'),
-        evaluation=True,
-        seq_len=None,
-        trials=t,
-    )
-
-    return ds_enroll, ds_test
+if __name__ == "__main__":
+    from pathlib import Path
+    print(make_kaldi_ds(Path("/local_disk/arges/jduret/kaldi/egs/fabiol/v2/data/fabiol_test_no_sil")))
+    print(make_kaldi_ds([Path("/local_disk/arges/jduret/kaldi/egs/fabiol/v2/data/fabiol_test_no_sil"),
+                    Path("/local_disk/arges/jduret/kaldi/egs/fabiol/v2/data/fabiol_enroll_no_sil")]))

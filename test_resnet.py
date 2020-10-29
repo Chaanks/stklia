@@ -212,6 +212,6 @@ if __name__ == "__main__":
     model = model.to(device)
 
     assert args.test_data_path != None and args.trials_path != None, f"No test or trials specified in {args.cfg}"
-    ds_val = dataset.make_kaldi_ds(args.train_data_path, seq_len=args.max_seq_len, evaluation=True, trials=args.trials_path)
+    ds_val = dataset.make_kaldi_ds(args.test_data_path, seq_len=args.max_seq_len, evaluation=True, trials=args.trials_path)
 
     score_utt_utt(model, ds_val, device)
