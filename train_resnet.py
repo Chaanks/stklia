@@ -37,11 +37,7 @@ def get_lr(optimizer):
         return param_group['lr']
 
 @logger.catch
-def train(args, dataloader_train, dataset_validation=None):
-    # Check if cuda is available :
-    cuda_test()
-    device = get_device(not args.no_cuda)
-
+def train(args, dataloader_train, device, dataset_validation=None):
     # Tensorflow logger
     writer = SummaryWriter(comment='_{}'.format(args.cfg.name))
     num_classes = ds_train.num_classes
@@ -175,7 +171,8 @@ if __name__ == "__main__":
     args.model_dir.mkdir(parents=True, exist_ok=True)
     args.checkpoints_dir.mkdir(exist_ok=True)
 
-    # TODO: resume checkpoint
+    cuda_test()
+    device = get_device(not args.no_cuda)
 
     if args.log_file.exists():
         args.log_file.unlink()
@@ -193,4 +190,4 @@ if __name__ == "__main__":
     else:
         ds_val = None
 
-    train(args, dl_train, ds_val)
+    train(args, dl_train, device, ds_val)

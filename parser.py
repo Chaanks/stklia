@@ -29,13 +29,21 @@ def fetch_args_and_config(verbose=0):
 
     parser.add_argument('--cfg', type=str, help="Path to a config file")
     parser.add_argument('--checkpoint', '--resume-checkpoint', type=int, default=-2,
-                            help="Model Checkpoint to use.\n\t[TEST] default : use the last one\n\t[TRAIN] default : None used, -1 use the last one")
+                            help="Model Checkpoint to use. [TEST] default : use the last one [TRAIN] default : None used, -1 : use the last one")
+    parser.add_argument("-m", "--mode", type=str, choices=["train", "test"], help="Put this argument to train the resnet")
 
     args = parser.parse_args()
+
     # Check that there is a config file
-    assert args.cfg, "Please specify a config file using --cfg"
+    if not args.cfg:
+        print("Please specify a config file using --cfg, or see documentation with --help")
+        exit(0)
     args.cfg = Path(args.cfg)
-    assert args.cfg.is_file(), f"No such file {args.cfg}"    
+    assert args.cfg.is_file(), f"No such file {args.cfg}"
+
+    if not args.mode:
+        print(f"Please choose a mode with --mode, see the help with --help")
+        exit(0)
 
     args._start_time = time.ctime()
 
