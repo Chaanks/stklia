@@ -24,6 +24,7 @@ from pathlib import Path
 from loguru import logger
 
 import dataset
+import data_io
 from models import resnet34
 from parser import fetch_args_and_config
 from cuda_test import get_device
@@ -125,7 +126,7 @@ def score_utt_utt(generator, ds_test, device, mindcf=False):
     all_res = {}
     for verilist_path in trials:
         assert verilist_path.is_file()
-        veri_labs, veri_utt1, veri_utt2 = dataset.load_n_col(verilist_path)
+        veri_labs, veri_utt1, veri_utt2 = data_io.load_n_col(verilist_path)
         veri_labs = np.asarray(veri_labs, dtype=int)
 
         all_embeds = np.vstack(all_embeds)
