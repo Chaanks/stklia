@@ -50,8 +50,8 @@ def train(args, dataloader_train, dataset_validation=None):
     logger.info("num_classes: " + str(num_classes))
 
     # Generator and classifier definition
-    generator = resnet34(256)
-    classifier = NeuralNetAMSM(256, num_classes)
+    generator = resnet34(args)
+    classifier = NeuralNetAMSM(args.nOut, num_classes)
 
     generator.train()
     classifier.train()
@@ -76,7 +76,6 @@ def train(args, dataloader_train, dataset_validation=None):
     if args.multi_gpu:
         dpp_generator = nn.DataParallel(generator).to(device)
     
-    running_loss = [np.nan for _ in range(500)] # loss hisotry per iteration
     if dataset_validation is not None:
         best_eer = {v.name:{'eer':1, 'ite':-1} for v in dataset_validation.trials} # best eer of all iterations
 
@@ -158,7 +157,7 @@ def train(args, dataloader_train, dataset_validation=None):
                 for veri, vals in best_eer.items():
                     msg += f"\nBest score for {veri} is at {vals['ite']} ite : {vals['eer']} eer"
                 logger.success(msg)
-            print(f"Saved checkpoint at iteration {iterations}")
+            logger.info(f"Saved checkpoint at iteration {iterations}")
 
     # Final model saving
     for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
@@ -170,7 +169,7 @@ def train(args, dataloader_train, dataset_validation=None):
 
 
 if __name__ == "__main__":
-    args = fetch_args_and_config(1)
+    args = fetch_args_and_config(verbose=True)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     args.checkpoints_dir.mkdir(exist_ok=True)
 
