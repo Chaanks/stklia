@@ -39,7 +39,7 @@ def get_lr(optimizer):
 def train(args, dataloader_train, device, dataset_validation=None):
     # Tensorflow logger
     writer = SummaryWriter(comment='_{}'.format(args.cfg.name))
-    num_classes = ds_train.num_classes
+    num_classes = dataloader_train.dataset.num_classes
 
     # loguru
     logger.info("num_classes: " + str(num_classes))
