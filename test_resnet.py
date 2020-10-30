@@ -85,17 +85,16 @@ def compute_utt_xvec(generator, ds, device):
     return list(all_embeds.values()), list(all_embeds.keys())
 
 @logger.catch
-def compute_unique_utt_xvec(generator, ds, device):
+def compute_unique_utt_xvec(generator, ds, trial, device):
     """
         TODO Extract the x-vectors only for sessions required by trial.
     """
     # set the model in eval mode
     generator.eval()
 
-    veri_labs, veri_0, veri_1 = load_n_col(ds.trials, numpy=True)
-    veri_labs = veri_labs.astype(int)
-    veri_0 = list(filter(lambda utt: utt in utt2spk, veri_0))
-    veri_1 = list(filter(lambda utt: utt in utt2spk, veri_1))
+    veri_labs, veri_0, veri_1 = data_io.load_n_col(trial)
+    veri_0 = list(filter(lambda utt: utt in ds.utt2spk, veri_0))
+    veri_1 = list(filter(lambda utt: utt in ds.utt2spk, veri_1))
     veri_utts = list(set(np.concatenate([veri_0, veri_1])))
 
     all_embeds = {}
@@ -106,7 +105,7 @@ def compute_unique_utt_xvec(generator, ds, device):
             feats = feats.unsqueeze(0).to(device)
             feats = feats.unsqueeze(1)
             embeds = generator(feats).cpu().numpy()
-            all_embeds[utt] = embeds
+            all_embeds[veri_utts[i]] = embeds
     
     return list(all_embeds.values()), list(all_embeds.keys())
 
@@ -148,11 +147,12 @@ def score_utt_utt(generator, ds_test, device, mindcf=False):
         trials = [trials]
 
     #all_embeds, all_utts = compute_utt_xvec(generator, ds_test, device)
-    all_embeds, all_utts = compute_unique_utt_xvec(generator, ds_test, device)
 
     all_res = {}
     for verilist_path in trials:
         assert verilist_path.is_file()
+        all_embeds, all_utts = compute_unique_utt_xvec(generator, ds_test, verilist_path, device)
+
         veri_labs, veri_utt1, veri_utt2 = data_io.load_n_col(verilist_path)
         veri_labs = np.asarray(veri_labs, dtype=int)
 

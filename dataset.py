@@ -72,6 +72,13 @@ class SpeakerDataset(Dataset):
             feats = self.trans(feats, self.seq_len)
 
         return feats, spk, utt
+    
+    def get_utt_feats(self, utt):
+        feats = self.loading_method(self.utt2path[utt])
+        if self.seq_len:
+            feats = self.trans(feats, self.seq_len)
+
+        return feats
 
 # Recettes :
 def make_pytorch_ds(utt_list, utt2path_func, seq_len=400, evaluation=False, trials=None):

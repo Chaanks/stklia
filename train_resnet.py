@@ -152,7 +152,7 @@ def train(args, dataloader_train, device, dataset_validation=None):
                         best_eer[veri_pair]["ite"] = iterations
                 msg = ""
                 for veri, vals in best_eer.items():
-                    msg += f"\nBest score for {veri} is at {vals['ite']} ite : {vals['eer']} eer"
+                    msg += f"\nBest score for {veri} is at iteration {vals['ite']} : {vals['eer']} eer"
                 logger.success(msg)
             logger.info(f"Saved checkpoint at iteration {iterations}")
 
