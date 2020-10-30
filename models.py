@@ -9,6 +9,8 @@ defining the ResNet and the classifier.
 __author__ = "Duret Jarod, Brignatz Vincent"
 __license__ = "MIT"
 
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -65,8 +67,8 @@ class BasicBlock(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, num_filters, nOut, zero_init_residual=False,
-                 groups=1, width_per_group=64, replace_stride_with_dilation=None,
+    def __init__(self, block, layers, num_filters, nOut, pooling_mode='statistical', features_per_frame=30,
+                 zero_init_residual=False, groups=1, width_per_group=64, replace_stride_with_dilation=None,
                  norm_layer=None):
         super(ResNet, self).__init__()
         if norm_layer is None:
@@ -93,7 +95,10 @@ class ResNet(nn.Module):
         self.layer2 = self._make_layer(block, num_filters[1], layers[1], stride=2)
         self.layer3 = self._make_layer(block, num_filters[2], layers[2], stride=2)
         self.layer4 = self._make_layer(block, num_filters[3], layers[3], stride=2)
-        self.fc = nn.Linear(num_filters[3] * 4 * 2, nOut)
+        
+        self.pooling_mode = pooling_mode
+        pooling_size = 2 if self.pooling_mode == 'statistical' else 1
+        self.fc = nn.Linear(num_filters[3] * math.ceil(features_per_frame * (0.5 ** (len(layers) - 1))) * pooling_size, nOut)
         self.bn2 = nn.BatchNorm1d(nOut)
 
         for m in self.modules():
@@ -136,10 +141,10 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def _forward_impl(self, x):
-        # See note [TorchScript super()]
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
+        
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
@@ -147,8 +152,8 @@ class ResNet(nn.Module):
 
         x = x.transpose(2, 3)
         x = x.flatten(1, 2)
-        x = x.std(dim=2)
-        
+        x = pooling(x, self.pooling_mode)
+
         x = self.fc(x)
         x = self.bn2(x)
 
@@ -157,17 +162,44 @@ class ResNet(nn.Module):
     def forward(self, x):
         return self._forward_impl(x)
 
-def resnet34(nOut=256, **kwargs):
+
+def resnet34(args, **kwargs):
     """ 
         A small funtion that initialize a resnet 34.
         Usage: 
             model = resnet34()
     """
-    num_filters = [32, 64, 128, 256]
-    layers = [3, 4, 6, 3]
-    model = ResNet(BasicBlock, layers, num_filters, nOut, zero_init_residual=True, **kwargs)
-
+    model = ResNet(BasicBlock,
+                   args.layers,
+                   args.num_filters,
+                   args.nOut, 
+                   args.pooling,
+                   args.features_per_frame,
+                   args.zero_init_residual,
+                   **kwargs)
     return model
+
+
+def pooling(x, mode='statistical'):
+    """
+        function that implement different kind of pooling
+    """
+    if mode == 'min':
+        x, _ = x.min(dim=2)
+    elif mode == 'max':
+        x, _ = x.min(dim=2)
+    elif mode == 'mean':
+        x = x.mean(dim=2)
+    elif mode == 'std':
+        x = x.std(dim=2)
+    elif mode == 'statistical':
+        means = x.mean(dim=2)
+        stds = x.std(dim=2)
+        x = torch.cat([means, stds], dim=1)
+    else:
+        raise ValueError('Unexpected pooling mode.')
+
+    return x
 
 
 class NeuralNetAMSM(nn.Module):

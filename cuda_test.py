@@ -16,7 +16,7 @@ from subprocess import call
 
 def cuda_test():
     """ Function used to give informations about the environment and the available GPUs """
-    print('__Python VERSION :', sys.version)
+    print('\n__Python VERSION :', sys.version)
     print('__pyTorch VERSION :', torch.__version__)
     print('__CUDA VERSION : ', torch.version.cuda)
     print('__CUDNN VERSION : ', torch.backends.cudnn.version())

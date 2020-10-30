@@ -46,8 +46,8 @@ def train(args, dataloader_train, device, dataset_validation=None):
     logger.info("num_classes: " + str(num_classes))
 
     # Generator and classifier definition
-    generator = resnet34(256)
-    classifier = NeuralNetAMSM(256, num_classes)
+    generator = resnet34(args)
+    classifier = NeuralNetAMSM(args.nOut, num_classes)
 
     generator.train()
     classifier.train()
@@ -155,7 +155,7 @@ def train(args, dataloader_train, device, dataset_validation=None):
                 for veri, vals in best_eer.items():
                     msg += f"\nBest score for {veri} is at {vals['ite']} ite : {vals['eer']} eer"
                 logger.success(msg)
-            print(f"Saved checkpoint at iteration {iterations}")
+            logger.info(f"Saved checkpoint at iteration {iterations}")
 
     # Final model saving
     for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
