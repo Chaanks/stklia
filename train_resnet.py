@@ -23,7 +23,6 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 import dataset
@@ -164,30 +163,3 @@ def train(args, dataloader_train, device, dataset_validation=None):
         cp_model_path = args.model_dir / cp_filename
         torch.save(model.state_dict(), cp_model_path)
     logger.success(f'Training complete in {time.process_time()-start} seconds')
-
-
-if __name__ == "__main__":
-    args = fetch_args_and_config(1)
-    args.model_dir.mkdir(parents=True, exist_ok=True)
-    args.checkpoints_dir.mkdir(exist_ok=True)
-
-    cuda_test()
-    device = get_device(not args.no_cuda)
-
-    if args.log_file.exists():
-        args.log_file.unlink()
-    logger.add(args.log_file, format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}", backtrace=False, diagnose=False)
-
-    torch.manual_seed(args.seed)
-    np.random.seed(seed=args.seed)
-
-    #TODO: support pytorch dataset
-    ds_train = dataset.make_kaldi_ds(args.train_data_path, seq_len=args.max_seq_len, evaluation=False, trials=None)
-    dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True)
-
-    if args.test_data_path and args.trials_path:
-        ds_val = dataset.make_kaldi_ds(args.test_data_path, seq_len=args.max_seq_len, evaluation=True, trials=args.trials_path)
-    else:
-        ds_val = None
-
-    train(args, dl_train, device, ds_val)

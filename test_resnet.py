@@ -84,6 +84,32 @@ def compute_utt_xvec(generator, ds, device):
     
     return list(all_embeds.values()), list(all_embeds.keys())
 
+@logger.catch
+def compute_unique_utt_xvec(generator, ds, device):
+    """
+        TODO Extract the x-vectors only for sessions required by trial.
+    """
+    # set the model in eval mode
+    generator.eval()
+
+    veri_labs, veri_0, veri_1 = load_n_col(ds.trials, numpy=True)
+    veri_labs = veri_labs.astype(int)
+    veri_0 = list(filter(lambda utt: utt in utt2spk, veri_0))
+    veri_1 = list(filter(lambda utt: utt in utt2spk, veri_1))
+    veri_utts = list(set(np.concatenate([veri_0, veri_1])))
+
+    all_embeds = {}
+
+    with torch.no_grad():
+        for i in tqdm(range(len(veri_utts))):
+            feats = ds.get_utt_feats(veri_utts[i])
+            feats = feats.unsqueeze(0).to(device)
+            feats = feats.unsqueeze(1)
+            embeds = generator(feats).cpu().numpy()
+            all_embeds[utt] = embeds
+    
+    return list(all_embeds.values()), list(all_embeds.keys())
+
 def eer_from_ers(fpr, tpr):
     fnr = 1 - tpr
     eer = fpr[np.nanargmin(np.absolute((fnr - fpr)))]
@@ -121,7 +147,8 @@ def score_utt_utt(generator, ds_test, device, mindcf=False):
     if not isinstance(trials, list):
         trials = [trials]
 
-    all_embeds, all_utts = compute_utt_xvec(generator, ds_test, device)
+    #all_embeds, all_utts = compute_utt_xvec(generator, ds_test, device)
+    all_embeds, all_utts = compute_unique_utt_xvec(generator, ds_test, device)
 
     all_res = {}
     for verilist_path in trials:
@@ -192,27 +219,3 @@ def score_spk_utt(generator, ds_enroll, ds_test, trials, device):
         print(f'[{verilist_path.name}] EER :{eer*100:.4f}')
         all_eer[verilist_path.name] = {"eer":eer}
     return all_eer
-
-if __name__ == "__main__":
-    args = fetch_args_and_config(1)
-
-    device = get_device(not args.no_cuda)
-
-    # Load model
-    if args.checkpoint < 0:
-        g_path = args.model_dir / "final_g_{}.pt".format(args.num_iterations)
-        g_path_test = g_path
-    else:
-        print('use checkpoint {}'.format(args.checkpoint))
-        g_path = args.checkpoints_dir / "g_{}.pt".format(args.checkpoint)
-        g_path_test = g_path
-
-    # TODO: choose model type from cfg
-    model = resnet34(256)
-    model.load_state_dict(torch.load(g_path), strict=False)
-    model = model.to(device)
-
-    assert args.test_data_path != None and args.trials_path != None, f"No test or trials specified in {args.cfg}"
-    ds_val = dataset.make_kaldi_ds(args.test_data_path, seq_len=args.max_seq_len, evaluation=True, trials=args.trials_path)
-
-    score_utt_utt(model, ds_val, device)
