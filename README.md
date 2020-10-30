@@ -31,19 +31,19 @@ pip install -r requirements.txt
 The training is handled with train_resnet.py. The script is run with a .cfg file as input like so:
 
 ```sh
-python train_resnet.py --cfg config/example_speaker.cfg
+python run.py --mode train --cfg config/example_speaker.cfg
 ```
 
 In order to resume an experiment from an existing checkpoint interval:
 
 ```sh
-python train_resnet.py --cfg config/example_speaker.cfg --resume-checkpoint 1000
+python run.py --mode train --cfg config/example_speaker.cfg --resume-checkpoint 1000
 ```
 
 ### Test a model
 
 ```sh
-python test_resnet.py --cfg config/example_speaker.cfg --checkpoint 1250
+python run.py --mode test --cfg config/example_speaker.cfg --checkpoint 1250
 ```
 
 <!-- 
@@ -52,7 +52,7 @@ python test_resnet.py --cfg config/example_speaker.cfg --checkpoint 1250
 The extraction is handled within `extract_xvectors.py`. The script is run with a .cfg file as input like so:
 
 ```sh
-python extract_xvectors.py --cfg config/example_speaker.cfg
+python run.py --mode extract --cfg config/example_speaker.cfg
 ``` 
 -->
 
@@ -82,7 +82,7 @@ Most of these configurable hyper-parameters are fairly self-explanatory.
 ```ini
 [Hyperparams]
 lr = 0.2
-batch_size = 128 # must be less than num_classes
+batch_size = 128
 max_seq_len = 400
 no_cuda = False
 seed = 1234
@@ -91,20 +91,24 @@ momentum = 0.5
 scheduler_steps = [1000, 1500, 1750]
 scheduler_lambda = 0.5 # multiplies lr by this value at each step above
 multi_gpu = False # dataparallel
-log_interval = 100
 ```
 
 ### Outputs
 
 
-The output_dir is the folder in which models are stored. At every checkpoint_interval iterations, both the generator and classifier will be stored as a .pt model inside this folder. Each model has the form: g_<iterations>.pt, c_<iterations>.pt. This is relevant to the above section of how to resume from a previous checkpoint. For example, to resume from the 1000th iteration, both g_1000.pt, c_1000.pt must exist in checkpoints_dir.
+The model_dir is the folder in which models are stored. At every checkpoint_interval iterations, both the generator and classifier will be stored as a .pt model inside this folder. Each model has the form: g_\<iterations\>.pt, c_\<iterations\>.pt. This is relevant to the above section of how to resume from a previous checkpoint. For example, to resume from the 1000th iteration, both g_1000.pt, c_1000.pt must exist in checkpoints_dir.
 
 ```ini
 [Outputs]
-output_dir = exp/example_exp_speaker # place where models are stored
+model_dir = exp/example_exp_speaker # place where models are stored
 checkpoint_interval = 10 # Interval to save models and also evaluate
-checkpoints_dir = checkpoints # checkpoints will be stored in <output_dir>/<checkpoints_dir>/
+checkpoints_dir = checkpoints # checkpoints will be stored in <model_dir>/<checkpoints_dir>/
+log_interval = 1 
 ```
+
+## Known problems
+
+A batch size too big can lead to Cuda out of memory
 
 # References
 https://github.com/cvqluu/dropclass_speaker  

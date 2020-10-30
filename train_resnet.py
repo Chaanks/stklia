@@ -37,11 +37,7 @@ def get_lr(optimizer):
         return param_group['lr']
 
 @logger.catch
-def train(args, dataloader_train, dataset_validation=None):
-    # Check if cuda is available :
-    cuda_test()
-    device = get_device(not args.no_cuda)
-
+def train(args, dataloader_train, device, dataset_validation=None):
     # Tensorflow logger
     writer = SummaryWriter(comment='_{}'.format(args.cfg.name))
     num_classes = ds_train.num_classes
@@ -60,10 +56,16 @@ def train(args, dataloader_train, dataset_validation=None):
     classifier = classifier.to(device)
 
     # Load the trained model if we continue from a checkpoint
+    start_iteration = 0
     if args.checkpoint > 0:
+        start_iteration = args.checkpoint
         for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
-            checkpoint = '{}_{}.pt'.format(modelstr, args.resume_checkpoint)
-            model.load_state_dict(torch.load(args.checkpoints_dir / checkpoint))
+            model.load_state_dict(torch.load(args.checkpoints_dir / f'{modelstr}_{args.checkpoint}.pt'))
+    
+    elif args.checkpoint == -1:
+        start_iteration = max([int(filename.stem[2:]) for filename in args.checkpoints_dir().iterdir()])
+        for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
+            model.load_state_dict(torch.load(args.checkpoints_dir / f'{modelstr}_{start_iteration}.pt'))
 
     # Optimizer definition
     optimizer = torch.optim.SGD([{'params': generator.parameters(), 'lr': args.generator_lr},
@@ -80,17 +82,13 @@ def train(args, dataloader_train, dataset_validation=None):
         best_eer = {v.name:{'eer':1, 'ite':-1} for v in dataset_validation.trials} # best eer of all iterations
 
     start = time.process_time()
-    for iterations in range(0, args.num_iterations + 1):
+    for iterations in range(start_iteration, args.num_iterations + 1):
         # The current iteration is specified in the scheduler
         # Reduce the learning rate by the given factor (args.scheduler_lambda)
         if iterations in args.scheduler_steps:
             for params in optimizer.param_groups:
                 params['lr'] *= args.scheduler_lambda
             print(optimizer)
-
-        # Skip iterration if below checkpoint iter
-        if iterations <= args.checkpoint:
-            continue
 
         avg_loss = 0
         for feats, spk, utt in dataloader_train:
@@ -123,7 +121,7 @@ def train(args, dataloader_train, dataset_validation=None):
 
         # loguru logging :
         if iterations % args.log_interval == 0:
-            msg = "{}: {}: [{}/{}] \t C-Loss:{:.4f}, lr: {}, bs: {}".format(args.output_dir,
+            msg = "{}: {}: [{}/{}] \t C-Loss:{:.4f}, lr: {}, bs: {}".format(args.model_dir,
                                                                             time.ctime(),
                                                                             iterations,
                                                                             args.num_iterations,
@@ -163,17 +161,18 @@ def train(args, dataloader_train, dataset_validation=None):
     for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
         model.eval().cpu()
         cp_filename = "final_{}_{}.pt".format(modelstr, iterations)
-        cp_model_path = args.output_dir / cp_filename
+        cp_model_path = args.model_dir / cp_filename
         torch.save(model.state_dict(), cp_model_path)
     logger.success(f'Training complete in {time.process_time()-start} seconds')
 
 
 if __name__ == "__main__":
-    args = fetch_args_and_config(verbose=True)
-    args.output_dir.mkdir(parents=True, exist_ok=True)
+    args = fetch_args_and_config(1)
+    args.model_dir.mkdir(parents=True, exist_ok=True)
     args.checkpoints_dir.mkdir(exist_ok=True)
 
-    # TODO: resume checkpoint
+    cuda_test()
+    device = get_device(not args.no_cuda)
 
     if args.log_file.exists():
         args.log_file.unlink()
@@ -191,4 +190,4 @@ if __name__ == "__main__":
     else:
         ds_val = None
 
-    train(args, dl_train, ds_val)
+    train(args, dl_train, device, ds_val)
