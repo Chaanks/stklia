@@ -14,6 +14,7 @@ import numpy as np
 from loguru import logger
 
 import torch
+from torch.utils.data import DataLoader
 
 import dataset
 from parser import fetch_args_and_config

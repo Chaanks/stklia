@@ -25,10 +25,10 @@ def check_file_exist(file):
 def fetch_args_and_config(verbose=False):
     parser = argparse.ArgumentParser(description='Train and test of ResNet for speaker verification')
 
+    parser.add_argument("-m", "--mode", type=str, choices=["train", "test"], help="Put this argument to train the resnet")
     parser.add_argument('--cfg', type=str, help="Path to a config file")
     parser.add_argument('--checkpoint', '--resume-checkpoint', type=int, default=-2,
                             help="Model Checkpoint to use. [TEST] default : use the last one [TRAIN] default : None used, -1 : use the last one")
-    parser.add_argument("-m", "--mode", type=str, choices=["train", "test"], help="Put this argument to train the resnet")
 
     args = parser.parse_args()
 
@@ -71,7 +71,7 @@ def fetch_args_and_config(verbose=False):
         args.trials_path     = None
 
     try:
-        args.model_dir           = Path(config['Inputs']['model_dir'])
+        args.model_dir       = Path(config['Inputs']['model_dir'])
     except KeyError:
         pass
 
