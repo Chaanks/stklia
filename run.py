@@ -36,7 +36,7 @@ if __name__ == "__main__":
     #TODO: support pytorch dataset
 
     if args.test_data_path and args.trials_path:
-        ds_val = dataset.make_kaldi_ds(args.test_data_path, seq_len=args.max_seq_len, evaluation=True, trials=args.trials_path)
+        ds_val = dataset.make_kaldi_ds(args.test_data_path, seq_len=None, evaluation=True, trials=args.trials_path)
     else:
         if args.mode == "test":
             raise KeyError("No trial or Test data in test mode")
