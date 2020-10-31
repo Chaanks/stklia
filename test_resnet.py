@@ -197,7 +197,7 @@ def score_spk_utt(generator, ds_enroll, ds_test, trials, device):
     for verilist_path in trials:
         assert verilist_path.is_file()
 
-        veri_labs, veri_spk, veri_utt = dataset.load_n_col(verilist_path)
+        veri_labs, veri_spk, veri_utt = data_io.load_n_col(verilist_path)
         veri_labs = np.asarray(veri_labs, dtype=int)
 
         all_embeds = spks_mean + utts_embeds
