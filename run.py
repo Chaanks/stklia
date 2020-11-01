@@ -67,7 +67,7 @@ if __name__ == "__main__":
             g_path_test = g_path
 
         # TODO: choose model type from cfg
-        model = resnet34(256)
+        model = resnet34(args)
         model.load_state_dict(torch.load(g_path), strict=False)
         model = model.to(device)
 
