@@ -83,6 +83,13 @@ trials = path/to/trials/file1    #optional during training
 features_per_frame = 61
 ```
 
+The format of trials is as follows:
+
+```
+1 <utterance_a> <utterance_b>
+0 <utterance_a> <utterance_c>
+```
+
 ### Hyperparameters
 
 Most of these configurable hyper-parameters are fairly self-explanatory.
