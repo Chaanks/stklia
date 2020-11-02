@@ -15,6 +15,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from scipy.stats import kurtosis, skew
+
+
 def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1):
     """3x3 convolution with padding"""
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
@@ -97,7 +100,7 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, num_filters[3], layers[3], stride=2)
         
         self.pooling_mode = pooling_mode
-        pooling_size = 2 if self.pooling_mode == 'statistical' else 1
+        pooling_size = 2 if self.pooling_mode in ['statistical', 'std_skew', 'std_kurtosis'] else 1
         self.fc = nn.Linear(num_filters[3] * math.ceil(features_per_frame * (0.5 ** (len(layers) - 1))) * pooling_size, nOut)
         self.bn2 = nn.BatchNorm1d(nOut)
 
@@ -196,6 +199,18 @@ def pooling(x, mode='statistical'):
         means = x.mean(dim=2)
         stds = x.std(dim=2)
         x = torch.cat([means, stds], dim=1)
+    elif mode == 'std_kurtosis':
+        stds = x.std(dim=2)
+        kurtoses = kurtosis(x.detach().cpu(), axis=2, fisher=False)
+        kurtoses = torch.from_numpy(kurtoses)
+        kurtoses = kurtoses.to(stds.device)
+        x = torch.cat([stds, kurtoses], dim=1)
+    elif mode == 'std_skew':
+        stds = x.std(dim=2)
+        skews = skew(x.detach().cpu(), axis=2)
+        skews = torch.from_numpy(skews)
+        skews = skews.to(stds.device)
+        x = torch.cat([stds, skews], dim=1)
     else:
         raise ValueError('Unexpected pooling mode.')
 

@@ -38,7 +38,7 @@ def get_lr(optimizer):
 @logger.catch
 def train(args, dataloader_train, device, dataset_validation=None):
     # Tensorflow logger
-    writer = SummaryWriter(comment='_{}'.format(args.cfg.name))
+    writer = SummaryWriter(comment='_{}'.format(args.model_dir.name))
     num_classes = dataloader_train.dataset.num_classes
 
     # loguru
