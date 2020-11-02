@@ -1,5 +1,7 @@
 # Simple-tklia
 
+⚠️ **This is a work in progress, your feedback is welcomed** ⚠️
+
 ## Trivia
 
 The overall pipeline for training a speaker representation network has two main components, which are referred to in this repo as a generator and a classifier. The generator is the network which actually produces the embedding:
@@ -25,6 +27,10 @@ git clone https://github.com/Chaanks/stklia
 ```sh
 pip install -r requirements.txt
 ```
+
+## Data
+
+To use this toolkit, please prepare your data with [kaldi](https://kaldi-asr.org). When specifying a kaldi dataset folder to our toolkit, please ensure that this folder contains thes files `feats.scp`, `utt2spk`, `spk2utt`.
 
 ## How to run
 ### Train a model
@@ -64,6 +70,7 @@ An example .cfg file for speaker training is provided below and in configs/examp
 
 These are the locations of the datasets. Test and trial field are optional for the training. If they are not included in the config file, no evaluation is done during training.
 It is possible to specify multiple folders. If so, the folder will be merged into one dataset class containing all the data.
+Make sure to specify the number of features of your data with `features_per_frame`.
 
 ```ini
 [Datasets]
@@ -73,6 +80,7 @@ test = path/to/kaldi/test/data/ #optional during training
 trials = path/to/trials/file1    #optional during training 
     path/to/trials/file2
     path/to/trials/file3
+features_per_frame = 61
 ```
 
 ### Hyperparameters
@@ -91,6 +99,20 @@ momentum = 0.5
 scheduler_steps = [1000, 1500, 1750]
 scheduler_lambda = 0.5 # multiplies lr by this value at each step above
 multi_gpu = False # dataparallel
+```
+
+### Model
+
+This section is used to specify the model size, the embeddings size, pooling mode.
+Pooling can be `min`, `max`, `mean`, `std`, `statistical`.
+
+```ini
+[Model]
+nOut = 256
+layers = [3, 4, 6, 3]
+num_filters = [32, 64, 128, 256]
+zero_init_residual = True
+pooling = statistical
 ```
 
 ### Outputs
