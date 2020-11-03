@@ -27,8 +27,7 @@ source kaldi_path.sh
 The speakers dataset used here are VoxCeleb (1+2). The only portion used for training is VoxCeleb 2 (train portion). The evaluation is computed on VoxCeleb 1 (train+test portion).
 
 ### VoxCeleb
-We use the VoxCeleb recipe in Kaldi to create our training examples. We also want to create a data directory that contains the longest 200,000 recordings,
-which we will use to train the backend.  
+We use the VoxCeleb recipe in Kaldi to create our training examples.
 The modified version is found in `run_vc_dataprep.sh`
 
 To run this, modify the variables at the top of the file to point to the location of VoxCeleb 1, 2, and MUSAN corpora, and then run the following, with `$KALDI_ROOT` referring to the location of your Kaldi installation.
@@ -81,7 +80,7 @@ features_per_frame = 30
 ```
 
 
-### Train the Model
+### Train thr model
 
 ```sh
 python run.py --mode train --cfg config/<config_name>.cfg
