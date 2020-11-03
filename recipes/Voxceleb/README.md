@@ -80,7 +80,7 @@ features_per_frame = 30
 ```
 
 
-### Train thr model
+### Train the model
 
 ```sh
 python run.py --mode train --cfg config/<config_name>.cfg
