@@ -1,6 +1,7 @@
 # Simple-tklia
 
-⚠️ **This is a work in progress, your feedback is welcomed** ⚠️
+⚠️ **This is a work in progress, your feedback is welcomed** ⚠️  
+✅ Checkout our [trello](https://trello.com/b/MGHEfOjL) to see our current work.
 
 ## Trivia
 
@@ -61,6 +62,20 @@ The extraction is handled within `extract_xvectors.py`. The script is run with a
 python run.py --mode extract --cfg config/example_speaker.cfg
 ``` 
 -->
+
+### Tensorboard
+
+Training and validation are saved in a tensorboard in the folder `stklia/runs/`. To visualize the data, use the command :
+```bash
+tensorboard --logdir runs/
+```
+
+If launching tensorboard from a remote server, use the `--port <your_port>`and `--bind_all` options :
+```bash
+tensorboard --logdir runs/ --port <your_port> --bind_all
+```
+
+> Note: make sure to be in the conda venv or to have tensorboard installed
 
 ## Configuration files
 An example .cfg file for speaker training is provided below and in configs/example_speaker.cfg:
