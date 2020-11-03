@@ -110,11 +110,9 @@ def train(args, dataloader_train, device, dataset_validation=None):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-
             avg_loss += loss.item()
-
+        
         avg_loss /= len(dataloader_train)
-
         # Write the loss in tensorflow
         writer.add_scalar('Loss', avg_loss, iterations)
 
@@ -126,7 +124,7 @@ def train(args, dataloader_train, device, dataset_validation=None):
                                                                             args.num_iterations,
                                                                             avg_loss,
                                                                             get_lr(optimizer),
-                                                                            len(feats)
+                                                                            args.batch_size
                                                                             )
             logger.info(msg) 
 
