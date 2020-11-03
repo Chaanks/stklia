@@ -36,17 +36,16 @@ if __name__ == "__main__":
 
     #TODO: support pytorch dataset
 
-    if args.test_data_path and args.trials_path:
-        ds_val = dataset.make_kaldi_ds(args.test_data_path, seq_len=None, evaluation=True, trials=args.trials_path)
-    else:
-        if args.mode == "test":
-            raise KeyError("No trial or Test data in test mode")
-        ds_val = None
-
     # TRAIN
     if args.mode == "train":
+        assert args.train_data_path, "No training dataset given in train mode"
         ds_train = dataset.make_kaldi_ds(args.train_data_path, seq_len=args.max_seq_len, evaluation=False, trials=None)
         dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True, num_workers=8)
+
+        if args.eval_data_path and args.eval_trial_path:
+            ds_val = dataset.make_kaldi_ds(args.eval_data_path, seq_len=None, evaluation=True, trials=args.eval_trial_path)
+        else:
+            ds_val = None
 
         if args.log_file.exists():
             args.log_file.unlink()
@@ -56,6 +55,8 @@ if __name__ == "__main__":
 
     #TEST
     if args.mode == "test":
+        assert args.test_data_path and args.test_trial_path, "No test dataset or trials given in test mode"
+        ds_test = dataset.make_kaldi_ds(args.test_data_path, seq_len=None, evaluation=True, trials=args.test_trial_path)
 
         # Load generator
         if args.checkpoint < 0:
@@ -72,4 +73,4 @@ if __name__ == "__main__":
         model = model.to(device)
 
         # TODO : support score_spk_utt
-        score_utt_utt(model, ds_val, device)
+        score_utt_utt(model, ds_test, device)

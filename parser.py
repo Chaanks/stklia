@@ -61,19 +61,26 @@ def fetch_args_and_config(verbose=False):
     args.scheduler_lambda    = config['Hyperparams'].getfloat('scheduler_lambda', fallback=0.5)
     args.multi_gpu           = config['Hyperparams'].getboolean('multi_gpu', fallback=False)
 
-    args.train_data_path     = [check_file_exist(Path(p)) for p in config['Dataset']['train'].split()]
-    args.features_per_frame  = config['Dataset'].getint('features_per_frame', fallback=256)
+    args.features_per_frame  = config['Dataset'].getint('features_per_frame', fallback=30)
+    # try to parse a train dataset
+    try:
+        args.train_data_path = [check_file_exist(Path(p)) for p in config['Dataset']['train'].split()]
+    except KeyError:
+        args.train_data_path = None
+    # try to parse a eval dataset
+    try:
+        args.eval_data_path  = [Path(p) for p in config['Dataset']['eval'].split()]
+        args.eval_trial_path = [Path(p) for p in config['Dataset']['eval_trial'].split()]
+    except KeyError:
+        args.eval_data_path  = None
+        args.eval_trial_path = None
+    # try to parse a test dataset
     try:
         args.test_data_path  = [Path(p) for p in config['Dataset']['test'].split()]
-        args.trials_path     = [Path(p) for p in config['Dataset']['trial'].split()]
+        args.test_trial_path = [Path(p) for p in config['Dataset']['test_trial'].split()]
     except KeyError:
         args.test_data_path  = None
-        args.trials_path     = None
-
-    try:
-        args.model_dir       = Path(config['Inputs']['model_dir'])
-    except KeyError:
-        pass
+        args.test_trial_path = None
 
     args.emb_size = config['Model'].getint('emb_size', fallback=256)
     args.layers = np.array(json.loads(config.get('Model', 'layers'))).astype(int)
