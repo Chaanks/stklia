@@ -46,7 +46,7 @@ def train(args, dataloader_train, device, dataset_validation=None):
 
     # Generator and classifier definition
     generator = resnet34(args)
-    classifier = NeuralNetAMSM(args.nOut, num_classes)
+    classifier = NeuralNetAMSM(args.emb_size, num_classes)
 
     generator.train()
     classifier.train()
