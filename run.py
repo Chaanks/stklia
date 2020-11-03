@@ -46,7 +46,7 @@ if __name__ == "__main__":
     # TRAIN
     if args.mode == "train":
         ds_train = dataset.make_kaldi_ds(args.train_data_path, seq_len=args.max_seq_len, evaluation=False, trials=None)
-        dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True)
+        dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True, num_workers=8)
 
         if args.log_file.exists():
             args.log_file.unlink()
