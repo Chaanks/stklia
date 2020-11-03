@@ -80,3 +80,9 @@ trials = $KALDI_ROOT/egs/voxceleb/v2/data/voxceleb1_nosil/veri_pairs #OPTIONAL
 features_per_frame = 30
 ```
 
+
+### Train the Model
+
+```sh
+python run.py --mode train --cfg config/<config_name>.cfg
+```
