@@ -25,7 +25,7 @@ git clone https://github.com/Chaanks/stklia
 ```
 3.  Go into the project folder and Install the needed packages with:
 ```sh
-pip install -r requirements.txt
+pip install -r requirement.txt
 ```
 
 ## Data
@@ -83,6 +83,13 @@ trials = path/to/trials/file1    #optional during training
 features_per_frame = 61
 ```
 
+The format of trials is as follows:
+
+```
+1 <utterance_a> <utterance_b>
+0 <utterance_a> <utterance_c>
+```
+
 ### Hyperparameters
 
 Most of these configurable hyper-parameters are fairly self-explanatory.
@@ -108,7 +115,7 @@ Pooling can be `min`, `max`, `mean`, `std`, `statistical`.
 
 ```ini
 [Model]
-nOut = 256
+emb_size = 256
 layers = [3, 4, 6, 3]
 num_filters = [32, 64, 128, 256]
 zero_init_residual = True

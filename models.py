@@ -70,7 +70,7 @@ class BasicBlock(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, num_filters, nOut, pooling_mode='statistical', features_per_frame=30,
+    def __init__(self, block, layers, num_filters, emb_size, pooling_mode='statistical', features_per_frame=30,
                  zero_init_residual=False, groups=1, width_per_group=64, replace_stride_with_dilation=None,
                  norm_layer=None):
         super(ResNet, self).__init__()
@@ -100,9 +100,11 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, num_filters[3], layers[3], stride=2)
         
         self.pooling_mode = pooling_mode
-        pooling_size = 2 if self.pooling_mode in ['statistical', 'std_skew', 'std_kurtosis'] else 1
-        self.fc = nn.Linear(num_filters[3] * math.ceil(features_per_frame * (0.5 ** (len(layers) - 1))) * pooling_size, nOut)
-        self.bn2 = nn.BatchNorm1d(nOut)
+
+        pooling_size = 2 if self.pooling_mode == 'statistical' else 1
+        self.fc = nn.Linear(num_filters[3] * math.ceil(features_per_frame * (0.5 ** (len(layers) - 1))) * pooling_size, emb_size)
+        self.bn2 = nn.BatchNorm1d(emb_size)
+
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -175,7 +177,7 @@ def resnet34(args, **kwargs):
     model = ResNet(BasicBlock,
                    args.layers,
                    args.num_filters,
-                   args.nOut, 
+                   args.emb_size, 
                    args.pooling,
                    args.features_per_frame,
                    args.zero_init_residual,
