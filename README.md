@@ -115,7 +115,7 @@ Pooling can be `min`, `max`, `mean`, `std`, `statistical`.
 
 ```ini
 [Model]
-nOut = 256
+emb_size = 256
 layers = [3, 4, 6, 3]
 num_filters = [32, 64, 128, 256]
 zero_init_residual = True
