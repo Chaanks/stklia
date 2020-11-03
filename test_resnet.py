@@ -107,6 +107,9 @@ def compute_unique_utt_xvec(generator, ds, trial, device):
             embeds = generator(feats).cpu().numpy()
             all_embeds[veri_utts[i]] = embeds
     
+    # set the model in train mode
+    generator.train()
+
     return list(all_embeds.values()), list(all_embeds.keys())
 
 def eer_from_ers(fpr, tpr):
