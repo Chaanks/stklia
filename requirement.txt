@@ -7,3 +7,4 @@ scipy==1.4.1
 sklearn==0.0
 tqdm==4.45.0
 tensorboard==2.2.1
+pandas==1.1.4
