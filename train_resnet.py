@@ -38,7 +38,7 @@ def get_lr(optimizer):
 @logger.catch
 def train(args, dataloader_train, device, dataset_validation=None):
     # Tensorflow logger
-    writer = SummaryWriter(comment='_{}'.format(args.cfg.name))
+    writer = SummaryWriter(comment='_{}'.format(args.model_dir.name))
     num_classes = dataloader_train.dataset.num_classes
 
     # loguru
@@ -110,11 +110,9 @@ def train(args, dataloader_train, device, dataset_validation=None):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-
             avg_loss += loss.item()
-
+        
         avg_loss /= len(dataloader_train)
-
         # Write the loss in tensorflow
         writer.add_scalar('Loss', avg_loss, iterations)
 
@@ -126,7 +124,7 @@ def train(args, dataloader_train, device, dataset_validation=None):
                                                                             args.num_iterations,
                                                                             avg_loss,
                                                                             get_lr(optimizer),
-                                                                            len(feats)
+                                                                            args.batch_size
                                                                             )
             logger.info(msg) 
 

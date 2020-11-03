@@ -16,6 +16,9 @@ from subprocess import call
 
 def cuda_test():
     """ Function used to give informations about the environment and the available GPUs """
+    # This flag enable the inbuilt cudnn auto-tuner
+    torch.backends.cudnn.benchmark = True
+
     print('\n__Python VERSION :', sys.version)
     print('__pyTorch VERSION :', torch.__version__)
     print('__CUDA VERSION : ', torch.version.cuda)
