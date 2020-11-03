@@ -25,7 +25,7 @@ git clone https://github.com/Chaanks/stklia
 ```
 3.  Go into the project folder and Install the needed packages with:
 ```sh
-pip install -r requirements.txt
+pip install -r requirement.txt
 ```
 
 ## Data
