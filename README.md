@@ -61,7 +61,8 @@ To extract the x-vector of a dataset, use the extract.py script with the followi
 python extract.py --modeldir <model_dir> --checkpoint <X> --data <data path>
 ``` 
 
- - `modeldir` should be the path to the trained model you want to extract the xvectors with. This folder should at least contain de `checkpoints` folder and the `experiment_settings.cfg` file. The `experiment_settings.cfg` (or `experiment_settings_resume.cfg` if present) will be used to create the generator.
+ - `--modeldir` should be the path to the trained model you want to extract the xvectors with. This folder should at least contain de `checkpoints` folder and the `experiment_settings.cfg` file. The `experiment_settings.cfg` (or `experiment_settings_resume.cfg` if present) will be used to create the generator.
+ - `--checkpoint` Is an optional parameter, it can be used to specify a checkpoint for the extraction. If not specifed the last checkpoint will be used.
  - `--data` can be used in 2 manners : You can specify a kaldi folder, and the folder's data will be extracted. Or, you can simply specify test/eval/train, and the corresponding dataset of `experiment_settings.cfg` will be extracted.
 
 ### Tensorboard
