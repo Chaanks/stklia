@@ -11,7 +11,6 @@ __license__ = "MIT"
 
 import time
 import json
-import argparse
 import configparser
 
 import numpy as np 
@@ -22,29 +21,8 @@ def check_file_exist(file):
     assert file.exists(), f"No sich file {file.name}"
     return file
 
-def fetch_args_and_config(verbose=False):
-    parser = argparse.ArgumentParser(description='Train and test of ResNet for speaker verification')
-
-    parser.add_argument("-m", "--mode", type=str, choices=["train", "test"], help="Put this argument to train the resnet")
-    parser.add_argument('--cfg', type=str, help="Path to a config file")
-    parser.add_argument('--checkpoint', '--resume-checkpoint', type=int, default=-2,
-                            help="Model Checkpoint to use. [TEST] default : use the last one [TRAIN] default : None used, -1 : use the last one")
-
-    args = parser.parse_args()
-
-    # Check that there is a config file
-    if not args.cfg:
-        print("Please specify a config file using --cfg, or see documentation with --help")
-        exit(0)
-    args.cfg = Path(args.cfg)
-    assert args.cfg.is_file(), f"No such file {args.cfg}"
-
-    if not args.mode:
-        print(f"Please choose a mode with --mode, see the help with --help")
-        exit(0)
-
-    args._start_time = time.ctime()
-
+def fetch_config(args, verbose=False):
+    
     # Parse the config file :
     config = configparser.ConfigParser()
     config.read(args.cfg)
@@ -61,19 +39,26 @@ def fetch_args_and_config(verbose=False):
     args.scheduler_lambda    = config['Hyperparams'].getfloat('scheduler_lambda', fallback=0.5)
     args.multi_gpu           = config['Hyperparams'].getboolean('multi_gpu', fallback=False)
 
-    args.train_data_path     = [check_file_exist(Path(p)) for p in config['Dataset']['train'].split()]
-    args.features_per_frame  = config['Dataset'].getint('features_per_frame', fallback=256)
+    args.features_per_frame  = config['Dataset'].getint('features_per_frame', fallback=30)
+    # try to parse a train dataset
+    try:
+        args.train_data_path = [check_file_exist(Path(p)) for p in config['Dataset']['train'].split()]
+    except KeyError:
+        args.train_data_path = None
+    # try to parse a eval dataset
+    try:
+        args.eval_data_path  = [Path(p) for p in config['Dataset']['eval'].split()]
+        args.eval_trial_path = [Path(p) for p in config['Dataset']['eval_trial'].split()]
+    except KeyError:
+        args.eval_data_path  = None
+        args.eval_trial_path = None
+    # try to parse a test dataset
     try:
         args.test_data_path  = [Path(p) for p in config['Dataset']['test'].split()]
-        args.trials_path     = [Path(p) for p in config['Dataset']['trial'].split()]
+        args.test_trial_path = [Path(p) for p in config['Dataset']['test_trial'].split()]
     except KeyError:
         args.test_data_path  = None
-        args.trials_path     = None
-
-    try:
-        args.model_dir       = Path(config['Inputs']['model_dir'])
-    except KeyError:
-        pass
+        args.test_trial_path = None
 
     args.emb_size = config['Model'].getint('emb_size', fallback=256)
     args.layers = np.array(json.loads(config.get('Model', 'layers'))).astype(int)
@@ -93,6 +78,3 @@ def fetch_args_and_config(verbose=False):
         pprint(vars(args))
 
     return args
-
-if __name__ == "__main__":
-    args = fetch_args_and_config(1)

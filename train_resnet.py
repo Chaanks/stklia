@@ -12,10 +12,6 @@ __license__ = "MIT"
 import time
 import numpy as np
 
-from shutil import copy as shutil_copy
-from collections import OrderedDict
-from pprint import pprint
-
 from tqdm import tqdm
 from loguru import logger
 from pathlib import Path
@@ -27,8 +23,6 @@ from torch.utils.tensorboard import SummaryWriter
 
 import dataset
 from models import resnet34, NeuralNetAMSM
-from parser import fetch_args_and_config
-from cuda_test import cuda_test, get_device
 from test_resnet import score_utt_utt
 
 def get_lr(optimizer):

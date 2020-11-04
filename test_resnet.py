@@ -10,8 +10,6 @@ __author__ = "Duret Jarod, Brignatz Vincent"
 __license__ = "MIT"
 
 import torch
-import pickle
-import sys
 import numpy as np
 
 from collections import OrderedDict
@@ -26,8 +24,6 @@ from loguru import logger
 import dataset
 import data_io
 from models import resnet34
-from parser import fetch_args_and_config
-from cuda_test import get_device
 
 @logger.catch
 def compute_spk_xvec(generator, ds, device):
@@ -60,6 +56,9 @@ def compute_spk_xvec(generator, ds, device):
     spks_mean = {}
     for spk in spk_sum.keys():
         spks_mean[spk] = spk_sum[spk] / spk_count[spk]
+    
+    # set the model in train mode
+    generator.train()
 
     # Rturn the spk xvec and the spk list
     return list(spks_mean.values()), list(spks_mean.keys())
@@ -81,6 +80,9 @@ def compute_utt_xvec(generator, ds, device):
             feats = feats.unsqueeze(1)
             embeds = generator(feats).cpu().numpy()
             all_embeds[utt] = embeds
+    
+    # set the model in train mode
+    generator.train()
     
     return list(all_embeds.values()), list(all_embeds.keys())
 

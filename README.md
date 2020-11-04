@@ -83,18 +83,26 @@ An example .cfg file for speaker training is provided below and in configs/examp
 
 ### Dataset specification
 
-These are the locations of the datasets. Test and trial field are optional for the training. If they are not included in the config file, no evaluation is done during training.
+These are the locations of the datasets.
+`train` field is mandatory for train mode.
+`test` and `test_trial` are mandatory for test mode.
+`eval` and `eval_trial` are optional field. If they are not specified, no evaluation is done during training.
 It is possible to specify multiple folders. If so, the folder will be merged into one dataset class containing all the data.
 Make sure to specify the number of features of your data with `features_per_frame`.
 
 ```ini
 [Datasets]
 train = path/to/kaldi/train/data/
-test = path/to/kaldi/test/data/ #optional during training
+
+eval = path/to/kaldi/eval/data/
+eval_trial = path/to/trials/file1
+
+test = path/to/kaldi/test/data/
     path/to/kaldi/enroll/data
-trials = path/to/trials/file1    #optional during training 
+test_trial = path/to/trials/file1
     path/to/trials/file2
     path/to/trials/file3
+    
 features_per_frame = 61
 ```
 
@@ -150,9 +158,28 @@ checkpoints_dir = checkpoints # checkpoints will be stored in <model_dir>/<check
 log_interval = 1 
 ```
 
-## Known problems
+## Slurm recommendation
 
-A batch size too big can lead to Cuda out of memory
+With a batch size of `128`, since batch size too big can lead to Cuda out of memory.
+
+```sh
+#!/bin/bash
+#SBATCH --job-name="👾"
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --partition=gpu
+#SBATCH --gpus-per-node=2
+#SBATCH --mem=16G
+#SBATCH --time=120:00:00
+
+source /etc/profile.d/conda.sh
+source /etc/profile.d/cuda.sh
+
+conda activate <venv name>
+
+python run.py ...
+
+```
 
 # References
 https://github.com/cvqluu/dropclass_speaker  
