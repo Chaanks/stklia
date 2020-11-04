@@ -10,8 +10,6 @@ __author__ = "Duret Jarod, Brignatz Vincent"
 __license__ = "MIT"
 
 import torch
-import pickle
-import sys
 import numpy as np
 
 from collections import OrderedDict
@@ -26,8 +24,6 @@ from loguru import logger
 import dataset
 import data_io
 from models import resnet34
-from parser import fetch_args_and_config
-from cuda_test import get_device
 
 @logger.catch
 def compute_spk_xvec(generator, ds, device):
