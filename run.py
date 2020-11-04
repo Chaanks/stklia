@@ -10,21 +10,46 @@ __license__ = "MIT"
 
 import time
 import numpy as np
+import argparse
 
 from loguru import logger
+from pathlib import Path
 
 import torch
 from torch.utils.data import DataLoader
 
 import dataset
-from parser import fetch_args_and_config
+from parser import fetch_config
 from cuda_test import cuda_test, get_device
 from train_resnet import train
 from test_resnet import score_utt_utt
 from models import resnet34
 
 if __name__ == "__main__":
-    args = fetch_args_and_config(1)
+
+    # ARGUMENTS PARSING
+    parser = argparse.ArgumentParser(description='Train and test of ResNet for speaker verification')
+
+    parser.add_argument("-m", "--mode", type=str, choices=["train", "test"], help="Put this argument to train the resnet")
+    parser.add_argument('--cfg', type=str, help="Path to a config file")
+    parser.add_argument('--checkpoint', '--resume-checkpoint', type=int, default=-2,
+                            help="Model Checkpoint to use. [TEST] default : use the last one [TRAIN] default : None used, -1 : use the last one")
+
+    args = parser.parse_args()
+
+    # Check that there is a config file
+    if not args.cfg:
+        print("Please specify a config file using --cfg, or see documentation with --help")
+        exit(0)
+    args.cfg = Path(args.cfg)
+    assert args.cfg.is_file(), f"No such file {args.cfg}"
+
+    if not args.mode:
+        print(f"Please choose a mode with --mode, see the help with --help")
+        exit(0)
+
+    # CONFIG FILE PARSING
+    args = fetch_config(args, 1)
     args.model_dir.mkdir(parents=True, exist_ok=True)
     args.checkpoints_dir.mkdir(exist_ok=True)
 
@@ -34,7 +59,7 @@ if __name__ == "__main__":
     cuda_test()
     device = get_device(not args.no_cuda)
 
-    #TODO: support pytorch dataset
+    exit(0)
 
     # TRAIN
     if args.mode == "train":
@@ -53,7 +78,7 @@ if __name__ == "__main__":
 
         train(args, dl_train, device, ds_val)
 
-    #TEST
+    # TEST
     if args.mode == "test":
         assert args.test_data_path and args.test_trial_path, "No test dataset or trials given in test mode"
         ds_test = dataset.make_kaldi_ds(args.test_data_path, seq_len=None, evaluation=True, trials=args.test_trial_path)
