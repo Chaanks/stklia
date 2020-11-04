@@ -8,7 +8,9 @@ run.py: This file is used as a launcher to train or test the resnet.
 __author__ = "Duret Jarod, Brignatz Vincent"
 __license__ = "MIT"
 
+
 import time
+import shutil
 import numpy as np
 
 from loguru import logger
@@ -46,7 +48,12 @@ if __name__ == "__main__":
             ds_val = dataset.make_kaldi_ds(args.eval_data_path, seq_len=None, evaluation=True, trials=args.eval_trial_path)
         else:
             ds_val = None
-
+            
+        if args.resume_checkpoint < 0:
+            shutil.copy(args.cfg, args.model_dir / 'experiment_settings.cfg')
+        else:
+            shutil.copy(args.cfg, args.model_dir / 'experiment_settings_resume.cfg')
+            
         if args.log_file.exists():
             args.log_file.unlink()
         logger.add(args.log_file, format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}", backtrace=False, diagnose=False)
