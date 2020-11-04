@@ -30,23 +30,16 @@ if __name__ == "__main__":
     # ARGUMENTS PARSING
     parser = argparse.ArgumentParser(description='Train and test of ResNet for speaker verification')
 
-    parser.add_argument("-m", "--mode", type=str, choices=["train", "test"], help="Put this argument to train the resnet")
-    parser.add_argument('--cfg', type=str, help="Path to a config file")
+    parser.add_argument("-m", "--mode", type=str, choices=["train", "test"], required=True, help="Put this argument to train the resnet")
+    parser.add_argument('--cfg', type=str, required=True, help="Path to a config file")
     parser.add_argument('--checkpoint', '--resume-checkpoint', type=int, default=-2,
                             help="Model Checkpoint to use. [TEST] default : use the last one [TRAIN] default : None used, -1 : use the last one")
 
     args = parser.parse_args()
 
-    # Check that there is a config file
-    if not args.cfg:
-        print("Please specify a config file using --cfg, or see documentation with --help")
-        exit(0)
+    # Check that the config file exist
     args.cfg = Path(args.cfg)
     assert args.cfg.is_file(), f"No such file {args.cfg}"
-
-    if not args.mode:
-        print(f"Please choose a mode with --mode, see the help with --help")
-        exit(0)
 
     # CONFIG FILE PARSING
     args = fetch_config(args, 1)
@@ -92,7 +85,6 @@ if __name__ == "__main__":
             g_path = args.checkpoints_dir / "g_{}.pt".format(args.checkpoint)
             g_path_test = g_path
 
-        # TODO: choose model type from cfg
         model = resnet34(args)
         model.load_state_dict(torch.load(g_path), strict=False)
         model = model.to(device)
