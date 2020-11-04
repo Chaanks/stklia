@@ -54,8 +54,6 @@ if __name__ == "__main__":
     cuda_test()
     device = get_device(not args.no_cuda)
 
-    exit(0)
-
     # TRAIN
     if args.mode == "train":
         assert args.train_data_path, "No training dataset given in train mode"
