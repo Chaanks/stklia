@@ -158,6 +158,21 @@ checkpoints_dir = checkpoints # checkpoints will be stored in <model_dir>/<check
 log_interval = 1 
 ```
 
+## Slurm recommendation
+
+With a batch size of `128`.
+
+```sh
+#!/bin/bash
+#SBATCH --job-name="👾"
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --partition=gpu
+#SBATCH --gpus-per-node=2
+#SBATCH --mem=16G
+#SBATCH --time=120:00:00
+```
+
 ## Known problems
 
 A batch size too big can lead to Cuda out of memory
