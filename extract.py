@@ -45,11 +45,29 @@ if __name__ == "__main__":
     args.cfg = set_res_file if set_res_file.is_file() else Path(args.modeldir) / "experiment_settings.cfg"
     assert args.cfg.is_file(), f"No such file {args.cfg}"
 
-    args.data = Path(args.data)
-    assert args.data.is_dir(), f"No such dir {args.data}"
-    ds_extract = dataset.make_kaldi_ds(args.data, seq_len=None, evaluation=True)
+    args = fetch_config(args) 
 
-    args = fetch_config(args)
+    try:
+        data_path = {"train":args.train_data_path,
+                     "eval" :args.eval_data_path,
+                     "test" :args.test_data_path }[args.data]
+    except KeyError:
+        data_path = Path(args.data)
+
+    if data_path == None:
+        raise KeyError("No dataset {0} in {1} file while given {0} as --data".format(args.data, args.cfg))
+    
+    if isinstance(data_path, list):
+        assert any(d.is_dir() for d in data_path), f"No such dir {data_path}"
+        out_dir = args.model_dir.resolve() / "xvectors" / f"{args.data}_data"
+    elif isinstance(data_path, Path):
+        assert data_path.is_dir(), f"No such dir {data_path}"
+        out_dir = args.model_dir.resolve() / "xvectors" / str(data_path.name)
+    else:
+        raise TypeError("This should not append, contact dev :(")
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    ds_extract = dataset.make_kaldi_ds(data_path, seq_len=None, evaluation=True)
 
     cuda_test()
     device = get_device(not args.no_cuda)
@@ -67,6 +85,5 @@ if __name__ == "__main__":
     generator.load_state_dict(torch.load(g_path), strict=False)
     generator = generator.to(device)
 
-    out_dir = args.model_dir.resolve() / "xvectors" / str(args.data.name)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    
     extract(generator, ds_extract, device, out_dir)
