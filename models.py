@@ -101,7 +101,7 @@ class ResNet(nn.Module):
         
         self.pooling_mode = pooling_mode
 
-        pooling_size = 2 if self.pooling_mode == 'statistical' else 1
+        pooling_size = 2 if self.pooling_mode in ['statistical', 'std_skew', 'std_kurtosis']  else 1
         self.fc = nn.Linear(num_filters[3] * math.ceil(features_per_frame * (0.5 ** (len(layers) - 1))) * pooling_size, emb_size)
         self.bn2 = nn.BatchNorm1d(emb_size)
 

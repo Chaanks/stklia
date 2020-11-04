@@ -80,7 +80,7 @@ def fetch_args_and_config(verbose=False):
     args.num_filters = np.array(json.loads(config.get('Model', 'num_filters'))).astype(int)
     args.zero_init_residual = config['Model'].getboolean('zero_init_residual', fallback=False)
     args.pooling = config['Model'].get('pooling', fallback='statistical')
-    assert args.pooling in ['min', 'max', 'mean', 'std', 'statistical'], f"Unknow pooling mode {args.pooling}"
+    assert args.pooling in ['min', 'max', 'mean', 'std', 'statistical', 'std_skew', 'std_kurtosis'], f"Unknow pooling mode {args.pooling}"
 
     args.model_dir           = Path(config['Outputs']['model_dir'])
     args.checkpoints_dir     = args.model_dir / 'checkpoints/'
