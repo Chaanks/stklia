@@ -160,7 +160,7 @@ log_interval = 1
 
 ## Slurm recommendation
 
-With a batch size of `128`.
+With a batch size of `128`, since batch size too big can lead to Cuda out of memory.
 
 ```sh
 #!/bin/bash
@@ -171,11 +171,15 @@ With a batch size of `128`.
 #SBATCH --gpus-per-node=2
 #SBATCH --mem=16G
 #SBATCH --time=120:00:00
+
+source /etc/profile.d/conda.sh
+source /etc/profile.d/cuda.sh
+
+conda activate <venv name>
+
+python run.py ...
+
 ```
-
-## Known problems
-
-A batch size too big can lead to Cuda out of memory
 
 # References
 https://github.com/cvqluu/dropclass_speaker  
