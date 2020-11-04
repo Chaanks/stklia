@@ -20,8 +20,8 @@ from cuda_test import cuda_test, get_device
 def extract(gen, ds, device, path):
     gen.eval()
 
-    ark_scp_xvector = f"ark:| copy-vector ark:- ark,scp:{path}/xvector.ark, {path}/xvector.scp"
-    with kaldi_io.open_or_fd(ark_scp_xvector,'w') as f:
+    ark_scp_xvector = f'ark:| copy-vector ark:- ark,scp:{path}/xvector.ark,{path}/xvector.scp'
+    with kaldi_io.open_or_fd(ark_scp_xvector,'wb') as f:
         with torch.no_grad():
             for i in tqdm(range(len(ds))):
                 feats, _, utt = ds.__getitem__(i)
@@ -67,5 +67,6 @@ if __name__ == "__main__":
     generator.load_state_dict(torch.load(g_path), strict=False)
     generator = generator.to(device)
 
-    out_dir = args.model_dir / "xvectors" / str(args.checkpoint)
+    out_dir = args.model_dir.resolve() / "xvectors" / str(args.data.name)
+    out_dir.mkdir(parents=True, exist_ok=True)
     extract(generator, ds_extract, device, out_dir)
