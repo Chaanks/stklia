@@ -9,6 +9,7 @@ exp
 exp/*
 runs/*
 outputs/
+xvectors/
 # C extensions
 *.so
 
