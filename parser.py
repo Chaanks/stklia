@@ -48,17 +48,17 @@ def fetch_config(args, verbose=False):
     # try to parse a eval dataset
     try:
         args.eval_data_path  = [Path(p) for p in config['Dataset']['eval'].split()]
-        args.eval_trial_path = [Path(p) for p in config['Dataset']['eval_trial'].split()]
+        args.eval_trials_path = [Path(p) for p in config['Dataset']['eval_trials'].split()]
     except KeyError:
         args.eval_data_path  = None
-        args.eval_trial_path = None
+        args.eval_trials_path = None
     # try to parse a test dataset
     try:
         args.test_data_path  = [Path(p) for p in config['Dataset']['test'].split()]
-        args.test_trial_path = [Path(p) for p in config['Dataset']['test_trial'].split()]
+        args.test_trials_path = [Path(p) for p in config['Dataset']['test_trials'].split()]
     except KeyError:
         args.test_data_path  = None
-        args.test_trial_path = None
+        args.test_trials_path = None
 
     args.emb_size = config['Model'].getint('emb_size', fallback=256)
     args.layers = np.array(json.loads(config.get('Model', 'layers'))).astype(int)

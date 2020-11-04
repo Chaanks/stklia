@@ -61,7 +61,7 @@ if __name__ == "__main__":
         dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True, num_workers=8)
 
         if args.eval_data_path and args.eval_trial_path:
-            ds_val = dataset.make_kaldi_ds(args.eval_data_path, seq_len=None, evaluation=True, trials=args.eval_trial_path)
+            ds_val = dataset.make_kaldi_ds(args.eval_data_path, seq_len=None, evaluation=True, trials=args.eval_trials_path)
         else:
             ds_val = None
             
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     # TEST
     if args.mode == "test":
         assert args.test_data_path and args.test_trial_path, "No test dataset or trials given in test mode"
-        ds_test = dataset.make_kaldi_ds(args.test_data_path, seq_len=None, evaluation=True, trials=args.test_trial_path)
+        ds_test = dataset.make_kaldi_ds(args.test_data_path, seq_len=None, evaluation=True, trials=args.test_trials_path)
 
         # Load generator
         if args.checkpoint < 0:

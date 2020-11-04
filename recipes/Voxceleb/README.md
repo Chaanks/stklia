@@ -16,7 +16,7 @@ $PATH
 ```
 You can use the script in the `utils` folder. Remember to change the KALDI_ROOT variable using your path.
 ```sh
-source kaldi_path.sh
+source ../utils/kaldi_path.sh
 ```
 > **Note:**  
 > As a first test to check the installation, open a bash shell, type "copy-feats" or > >> "copy-vector" and make sure no errors appear.
@@ -65,7 +65,7 @@ where 1 indicates both utterances have the same identity, and 0 indicates a diff
 
 ```sh
 wget http://www.robots.ox.ac.uk/~vgg/data/voxceleb/meta/veri_test.txt
-python trials_to_veri_pairs.py veri_test.txt $KALDI_ROOT/egs/voxceleb/v2/data/voxceleb1_nosil/veri_pairs
+python ../utils/trials_to_veri_pairs.py -i veri_test.txt -o $KALDI_ROOT/egs/voxceleb/v2/data/voxceleb1_nosil/veri_pairs
 rm veri_text.txt
 ```
 
@@ -74,8 +74,8 @@ rm veri_text.txt
 ```ini
 [Datasets]
 train = $KALDI_ROOT/egs/voxceleb/v2/data/train_combined_no_sil
-test = $KALDI_ROOT/egs/voxceleb/v2/data/voxceleb1_nosil #OPTIONAL
-trials = $KALDI_ROOT/egs/voxceleb/v2/data/voxceleb1_nosil/veri_pairs #OPTIONAL
+eval = $KALDI_ROOT/egs/voxceleb/v2/data/voxceleb1_nosil #OPTIONAL
+eval_trials = $KALDI_ROOT/egs/voxceleb/v2/data/voxceleb1_nosil/veri_pairs #OPTIONAL
 features_per_frame = 30
 ```
 
