@@ -86,9 +86,9 @@ An example .cfg file for speaker training is provided below and in configs/examp
 ### Dataset specification
 
 These are the locations of the datasets.
-`train` field is mandatory for train mode.
-`test` and `test_trial` are mandatory for test mode.
-`eval` and `eval_trial` are optional field. If they are not specified, no evaluation is done during training.
+`train` field is mandatory for train mode.  
+`test` and `test_trial` are mandatory for test mode.  
+`eval` and `eval_trial` are optional field. If they are not specified, no evaluation is done during training.  
 It is possible to specify multiple folders. If so, the folder will be merged into one dataset class containing all the data.
 Make sure to specify the number of features of your data with `features_per_frame`.
 
