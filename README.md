@@ -29,41 +29,47 @@ git clone https://github.com/Chaanks/stklia
 pip install -r requirement.txt
 ```
 
-## Data
+## Data preparation
 
-To use this toolkit, please prepare your data with [kaldi](https://kaldi-asr.org). When specifying a kaldi dataset folder to our toolkit, please ensure that this folder contains thes files `feats.scp`, `utt2spk`, `spk2utt`.
+To use this toolkit, please prepare your data with [kaldi](https://kaldi-asr.org). When specifying a kaldi dataset folder to our toolkit, please ensure that this folder contains thes files `feats.scp`, `utt2spk`, `spk2utt`.  
+Tutorials on how to prepare some popular datasets can be found [here](https://github.com/Chaanks/stklia/tree/master/recipes).
 
 ## How to run
+
+The training and testing of a model is handled with the script `run.py` :
+```sh
+python run.py [-h] -m {train,test} --cfg CFG [--checkpoint CHECKPOINT]
+```
+
 ### Train a model
-The training is handled with train_resnet.py. The script is run with a .cfg file as input like so:
+
+To train a model, simply specify the train mode and a configuration file to `run.py`.  
+Exemple :
 
 ```sh
 python run.py --mode train --cfg config/example_speaker.cfg
 ```
 
-In order to resume an experiment from an existing checkpoint interval:
+In order to resume an experiment from an existing checkpoint interval, add the `--checkpoint` arguement.  
+Exemple:
 
 ```sh
-python run.py --mode train --cfg config/example_speaker.cfg --resume-checkpoint 1000
+python run.py --mode train --cfg config/example_speaker.cfg --checkpoint 1000
 ```
 
 ### Test a model
 
+To test a model, simply specify the test mode and a configuration file to `run.py`.  
+Exemple :
+```sh
+python run.py --mode test --cfg config/example_speaker.cfg
+```
+
+A checkpoint can be added to the argument to test. If no checkpoint is specified, the last iteration will be used.
+Exemple :
 ```sh
 python run.py --mode test --cfg config/example_speaker.cfg --checkpoint 1250
 ```
-
-
-###  Extract X-Vectors
-
-To extract the x-vector of a dataset, use the extract.py script with the following command :
-```sh
-python extract.py --modeldir <model_dir> --checkpoint <X> --data <data path>
-``` 
-
- - `--modeldir` should be the path to the trained model you want to extract the xvectors with. This folder should at least contain de `checkpoints` folder and the `experiment_settings.cfg` file. The `experiment_settings.cfg` (or `experiment_settings_resume.cfg` if present) will be used to create the generator.
- - `--checkpoint` Is an optional parameter, it can be used to specify a checkpoint for the extraction. If not specifed the last checkpoint will be used.
- - `--data` can be used in 2 manners : You can specify a kaldi folder, and the folder's data will be extracted. Or, you can simply specify test/eval/train, and the corresponding dataset of `experiment_settings.cfg` will be extracted.
 
 ### Tensorboard
 
@@ -78,6 +84,18 @@ tensorboard --logdir runs/ --port <your_port> --bind_all
 ```
 
 > Note: make sure to be in the conda venv or to have tensorboard installed
+
+###  Extract X-Vectors
+
+To extract the x-vector of a dataset, use the extract.py script with the following command :
+```sh
+python extract.py [-h] -m MODELDIR [--checkpoint CHECKPOINT] -d DATA [-f {ark,txt,pt}] 
+``` 
+
+ - `--modeldir` should be the path to the trained model you want to extract the xvectors with. This folder should at least contain de `checkpoints` folder and the `experiment_settings.cfg` file. The `experiment_settings.cfg` (or `experiment_settings_resume.cfg` if present) will be used to create the generator.
+ - `--checkpoint` Is an optional parameter, it can be used to specify a checkpoint for the extraction. If not specifed the last checkpoint will be used.
+ - `--data` can be used in 2 manners : You can specify a kaldi folder, and the folder's data will be extracted. Or, you can simply specify test/eval/train, and the corresponding dataset of `experiment_settings.cfg` will be extracted.
+ - `--format` is used to specify the output format of the xvectors. It can be kaldi (`ark`), text (`txt`), or pytorch (`pt`). Default is kaldi.
 
 ## Configuration files
 An example .cfg file for speaker training is provided below and in configs/example_speaker.cfg:
