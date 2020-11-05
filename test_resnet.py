@@ -172,15 +172,15 @@ def score_utt_utt(generator, ds_test, device, mindcf=False):
 
         scores = scores_from_pairs(emb0, emb1)
         fpr, tpr, thresholds = roc_curve(1 - veri_labs, scores, pos_label=1, drop_intermediate=False)
-        eer = eer_from_ers(fpr, tpr)
+        eer = eer_from_ers(fpr, tpr)*100
 
         if mindcf:
             mindcf1 = compute_min_dcf(fpr, tpr, thresholds, p_target=0.01)
             mindcf2 = compute_min_dcf(fpr, tpr, thresholds, p_target=0.001)
-            print(f'[{verilist_path.name}] EER :{eer*100:.4f}  minDFC p=0.01 :{mindcf1}  minDFC p=0.001 :{mindcf2}  ')
+            print(f'[{verilist_path.name}] EER :{eer:.4f}%  minDFC p=0.01 :{mindcf1}  minDFC p=0.001 :{mindcf2}  ')
             all_res[verilist_path.name] = {"eer":eer, "mindcf1":mindcf1, "mindcf2":mindcf2}
         else:
-            print(f'[{verilist_path.name}] EER :{eer*100:.4f}')
+            print(f'[{verilist_path.name}] EER :{eer:.4f}%')
             all_res[verilist_path.name] = {"eer":eer}
     return all_res
 
@@ -219,8 +219,8 @@ def score_spk_utt(generator, ds_enroll, ds_test, trials, device):
 
         scores = scores_from_pairs(emb0, emb1)
         fpr, tpr, thresholds = roc_curve(1 - veri_labs, scores, pos_label=1, drop_intermediate=False)
-        eer = eer_from_ers(fpr, tpr)
+        eer = eer_from_ers(fpr, tpr)*100
 
-        print(f'[{verilist_path.name}] EER :{eer*100:.4f}')
+        print(f'[{verilist_path.name}] EER :{eer:.4f}%')
         all_eer[verilist_path.name] = {"eer":eer}
     return all_eer

@@ -6,7 +6,7 @@ In this exemple, we test a trained ResNet with the French dataset Fabiol.
 
 To run the test :
 ```bash
-stklia$ python run.py --mode test --cfg exemples/fabiol/cfg/test_fabiol.cfg --checkpoint 98200
+python run.py --mode test --cfg exemples/fabiol/cfg/test_fabiol.cfg --checkpoint 98200
 ```
 
 To extract the x-vectors of fabiol :
