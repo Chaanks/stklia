@@ -29,6 +29,10 @@ git clone https://github.com/Chaanks/stklia
 pip install -r requirement.txt
 ```
 
+## Exemples
+
+Exemples script can be found in [exemples/](https://github.com/Chaanks/stklia/tree/dev/exemples/). These exemples are ready to be run on the LIA's servers. We recommend trying them out before going further 😉.
+
 ## Data preparation
 
 To use this toolkit, please prepare your data with [kaldi](https://kaldi-asr.org). When specifying a kaldi dataset folder to our toolkit, please ensure that this folder contains thes files `feats.scp`, `utt2spk`, `spk2utt`.  
