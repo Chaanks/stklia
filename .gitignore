@@ -10,6 +10,8 @@ exp/*
 runs/*
 outputs/
 xvectors/
+slurm.py
+slurm/
 # C extensions
 *.so
 
