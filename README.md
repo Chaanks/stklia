@@ -1,4 +1,4 @@
-# Simple-tklia
+# STKLIA
 
 ⚠️ **This is a work in progress, your feedback is welcomed** ⚠️  
 ✅ Checkout our [trello](https://trello.com/b/MGHEfOjL) to see our current work.
