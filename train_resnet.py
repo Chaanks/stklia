@@ -56,7 +56,7 @@ def train(args, dataloader_train, device, dataset_validation=None):
             model.load_state_dict(torch.load(args.checkpoints_dir / f'{modelstr}_{args.checkpoint}.pt'))
     
     elif args.checkpoint == -1:
-        start_iteration = max([int(filename.stem[2:]) for filename in args.checkpoints_dir().iterdir()])
+        start_iteration = max([int(filename.stem[2:]) for filename in args.checkpoints_dir.iterdir()])
         for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
             model.load_state_dict(torch.load(args.checkpoints_dir / f'{modelstr}_{start_iteration}.pt'))
 
