@@ -1,6 +1,6 @@
 # ResNet test & extraction with VoxCeleb
 
-In this exemple, we test a trained ResNet on VoxCeleb-2 Dev with VoxCeleb-1 and we extract VoxCeleb-1 x-vectors.
+In this exemple, we test a trained ResNet on VoxCeleb-2 dev with VoxCeleb-1 and we extract VoxCeleb-1 x-vectors.
 
 ## Command
 
