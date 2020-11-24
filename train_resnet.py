@@ -72,7 +72,7 @@ def train(args, dataloader_train, device, dataset_validation=None):
         dpp_generator = nn.DataParallel(generator).to(device)
     
     if dataset_validation is not None:
-        best_eer = {v.name:{'eer':1, 'ite':-1} for v in dataset_validation.trials} # best eer of all iterations
+        best_eer = {v.name:{'eer':100, 'ite':-1} for v in dataset_validation.trials} # best eer of all iterations
 
     start = time.process_time()
     for iterations in range(start_iteration, args.num_iterations + 1):
