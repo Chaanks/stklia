@@ -20,3 +20,5 @@ To extract the x-vectors of VoxCeleb1 :
 ```sh
 python extract.py --modeldir exemples/voxceleb/model_dir --checkpoint 5800 --data eval
 ``` 
+> **Note:**  
+> You can specify --format to change the x-vectors output format, choices: ["ark", "txt", "pt"] default is "ark".
