@@ -6,7 +6,7 @@ In this exemple, we test a trained ResNet on VoxCeleb-2 dev with VoxCeleb-1 and 
 
 Set Kaldi path, you can use the script in the `recipes/utils` folder. Remember to change the KALDI_ROOT variable using your path.
 ```sh
-source ../utils/kaldi_path.sh
+source recipes/utils/kaldi_path.sh
 ```
 > **Note:**  
 > As a first test to check the installation, open a bash shell, type "copy-feats" or > >> "copy-vector" and make sure no errors appear.
