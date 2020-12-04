@@ -1,21 +1,30 @@
 
-# Résumé
+# Introduction
+
+Ce dossier permet la paramétrisation de n'importe quel dataset avec Kaldi. Pour se faire, 4 étapes sont nécéssaires :
 
 - Étape 1 : Installer kaldi
-- Étape 2 : Copier ce dossier dans kaldi/egs/fabiol/fbank/
-- Étape 3 : Generer les fichiers wav.scp, utt2spk, spk2utt
-- Étape 4 : Lancer la préparation des données
+- Étape 2 : Copier ce dossier dans kaldi/egs/any_dataset/fbank/
+- Étape 3 : Génerer les fichiers wav.scp, utt2spk, spk2utt
+- Étape 4 : Lancer la paramétrisation
 
 # Étape 1
 
-Installation des packages nécéssaires :
+Dans cette premiere étape, nous installons Kaldi.
+cf `kaldi/INSTALL` pour plus d'informations.
+
+## Installation des ressources
+
+Kaldi nécéssite certaines ressources pouvant être installé avec les commandes :
 ```
 sudo apt-get update
 sudo apt-get upgrade
 sudo apt-get install git bc g++ zlib1g-dev make automake autoconf bzip2 libtool subversion libatlas3-base
 ```
-Installation de Kaldi:
 
+## Installation de Kaldi:
+
+Pour installer Kaldi, il nous faut cloner le dépot officiel dans l'emplacement de notre choix, puis *build* le toolkit :
 ```
 git clone https://github.com/kaldi-asr/kaldi.git kaldi –origin upstream
 cd kaldi/tools
@@ -23,16 +32,19 @@ extras/check_dependencies.sh
 make
 ```
 
-# Étape 2
+# Étape 2 (Optionelle)
 
-Copier le dossier de fabiol dans le dossier exemples de kaldi, c'est le moment de donner le nom de votre dataset à ce dossier :
+Kaldi est livré avec de nombreux exemples situés dans `kaldi/egs/`. Pour respecter la structure des dossiers de kaldi, nous pouvons copier le dossier de any_dataset dans `kaldi/egs/`. 
+C'est le moment de donner le nom de votre dataset à ce dossier :
 ```
-cp -r general_kaldi_receipe/ path/to/kaldi/egs/<my_dataset_name>
+cp -r any_dataset/ path/to/kaldi/egs/<my_dataset_name>
 ```
+Ainsi, la structure `kaldi/egs/<my_dataset_name>/fbank/feature-extraction.sh` devrait être respectée.
 
 # Étape 3
 
-Comme chaque dataset se présente différement, veuillez génerer les fichiers wav.scp, utt2spk, spk2utt par vous même.
+Pour la acceder aux données, Kaldi a besoin de 3 fichiers : `wav.scp`, `utt2spk` et `spk2utt`. Chaque dataset se présentent différement, il vous revient de créer ces fichiers. Vous trouverez ci dessous des conseil et aide pour cette tâche.
+Ces fichiers devront être déposé dans un dossier. Nous conseillons de les places dans `data/<corpus>` (exemple : `data/train` ou `data/test`).
 
 ## wav.scp
 
@@ -89,27 +101,29 @@ Vous pouvez generer ce fichier en utilisant l'outil `kaldi/egs/wsj/s5/utils/utt2
 
 # Étape 4
 
-Lancer le script `fbank.sh`, dont l'utilisation est la suivante : 
-```
-usage: fbank.sh [-h] [--data-folder DATA_FOLDER] [--nj NJ] [--data-aug {true,false}]
-optional arguments:
-  -h, --help            show this help message and exit
-  --data-folder DATA_FOLDER
-                        the name of the data folder
-  --nj NJ               number of parallel jobs
-  --data-aug {true,false}
-                        condition to make data augmentation
-```
+## Paramétrisation
 
-- `--data-folder` permet de spécifier le dossier que vous voulez utiliser. Ce dossier doit etre dans `data/` et doit contenir les fichiers `wav.scp`, `utt2spk` et `spk2utt`. Exemple, pour utiliser le dossier 
+La paramétrisation des données se fait dans le script `feature-extraction.sh`. Ce cript génère deux dossiers :
+- le dossier spécifié dans `feature-out` contenant les features sous format binaire (format kaldi `.ark`). Ce dossier peut être lourd et sera fortement utilisé en lecture/écriture : nous déconseillons l'utilisation d'un SSD.
+- le dossier spécifié dans `data-out` contenant les metadonnées (`wav.scp`, `utt2spk` et `spk2utt` ...) utilisé pour lire les features (cf [section sur fichiers ark et scp](#ark-&-scp)).
+
+Ce script comporte les arguments suivant :
+- `--help` affiche l'aide
+- `--kaldi-path` le path COMPLET vers l'installation de kaldi
+- `--data-in` permet de spécifier le dossier contenant les fichiers `wav.scp`, `utt2spk` et `spk2utt`.
+- `--data-out` permet de spécifier le dossier de sortie des metadonnées.
+- `--feature-out` permet de spécifier le dossier de sortie de features (peut être lourd)
 - `--nj` permet de spécifier le nombre de process lancé en parallel. Attention, un nombre de process supérieur aux nombre de thread du CPU peut entrainer un rallentissement significatif.
-- `--data-aug` permet de spécifier si la préparation des données doit oui ou non ajouter de la reverberation et du bruit additif.
 
 Exemples :
 
 ```
-./fbank.sh --nj 8 --data-folder train
+./feature-extraction.sh --nj 8 --data-in data/train --data-out data/train-no-sil --features-out features/ --kaldi-path /home/me/kaldi/
 ```
+
+## Data Augmentation
+
+TODO
 
 # Exemples
 
@@ -192,3 +206,7 @@ Description de la structure des dossiers et leurs rôles
 ## Fichiers 
 
 Description des fichiers utilisés par kaldi et leurs rôles
+
+### ark & scp
+
+TODO
