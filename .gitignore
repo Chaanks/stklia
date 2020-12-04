@@ -1,5 +1,7 @@
-test.py
-speedtest.py
+slurm*
+*.out
+cfg/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
