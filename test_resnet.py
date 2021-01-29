@@ -184,21 +184,23 @@ def score_utt_utt(generator, ds_test, device, mindcf=False):
             all_res[verilist_path.name] = {"eer":eer}
     return all_res
 
-def score_spk_utt(generator, ds_enroll, ds_test, trials, device):
+def score_spk_utt(generator, ds_enroll, ds_test, device, mindcf=False):
     """ 
         Score the model on the trials of type :
         <spk> <utt> 0/1
     """
+
+    trials = ds_test.trials
     if not isinstance(trials, list):
         trials = [trials]
 
     # Get enroll embeddings
-    spks_mean, spks = compute_spk_xvec(model, ds_enroll, device)
+    spks_mean, spks = compute_spk_xvec(generator, ds_enroll, device)
 
     # Get test embeddings
-    utts_embeds, utts = compute_utt_xvec(model, ds_test, device)
+    utts_embeds, utts = compute_utt_xvec(generator, ds_test, device)
 
-    all_eer = {}
+    all_res = {}
     for verilist_path in trials:
         assert verilist_path.is_file()
 
@@ -221,6 +223,13 @@ def score_spk_utt(generator, ds_enroll, ds_test, trials, device):
         fpr, tpr, thresholds = roc_curve(1 - veri_labs, scores, pos_label=1, drop_intermediate=False)
         eer = eer_from_ers(fpr, tpr)*100
 
-        print(f'[{verilist_path.name}] EER :{eer:.4f}%')
-        all_eer[verilist_path.name] = {"eer":eer}
-    return all_eer
+        if mindcf:
+            mindcf1 = compute_min_dcf(fpr, tpr, thresholds, p_target=0.01)
+            mindcf2 = compute_min_dcf(fpr, tpr, thresholds, p_target=0.001)
+            print(f'[{verilist_path.name}] EER :{eer:.4f}%  minDFC p=0.01 :{mindcf1}  minDFC p=0.001 :{mindcf2}  ')
+            all_res[verilist_path.name] = {"eer":eer, "mindcf1":mindcf1, "mindcf2":mindcf2}
+        else:
+            print(f'[{verilist_path.name}] EER :{eer:.4f}%')
+            all_res[verilist_path.name] = {"eer":eer}
+
+    return all_res
