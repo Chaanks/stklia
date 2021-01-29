@@ -2,6 +2,10 @@
 
 In this exemple, we test a trained ResNet on VoxCeleb-2 dev with VoxCeleb-1 and we extract VoxCeleb-1 x-vectors.
 
+## Data
+
+In this example we use Fbank 60 and energy
+
 ## Command
 
 Set Kaldi path, you can use the script in the `recipes/utils` folder. Remember to change the KALDI_ROOT variable using your path.
