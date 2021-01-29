@@ -100,8 +100,8 @@ if __name__ == "__main__":
     # TEST ENROLL
     if args.mode == "test_enroll":
         assert args.test_data_path and args.test_trials_path, "No test dataset or trials given in test mode"
-        ds_test = dataset.make_kaldi_ds(args.test_data_path, seq_len=None, evaluation=True, trials=args.test_trials_path)
-        ds_enroll = dataset.make_kaldi_ds(args.test_data_path, seq_len=None, evaluation=False, trials=args.test_trials_path)
+        ds_test = dataset.make_kaldi_ds(args.test_data_path[0], seq_len=None, evaluation=True, trials=args.test_trials_path)
+        ds_enroll = dataset.make_kaldi_ds(args.test_data_path[1], seq_len=None, evaluation=False)
 
         # Load generator
         if args.checkpoint < 0:
