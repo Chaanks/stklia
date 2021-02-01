@@ -63,8 +63,8 @@ def train(args, dataloader_train, device, dataset_validation=None):
     # Optimizer definition
     optimizer = torch.optim.SGD([{'params': generator.parameters(), 'lr': args.generator_lr},
                                  {'params': classifier.parameters(), 'lr': args.classifier_lr}],
-                                momentum=args.momentum)
-
+                                momentum=args.momentum) #  weight_decay=0.0001
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', 0.1)
     criterion = nn.CrossEntropyLoss()
 
     # multi GPU support :
@@ -78,6 +78,7 @@ def train(args, dataloader_train, device, dataset_validation=None):
     for iterations in range(start_iteration, args.num_iterations + 1):
         # The current iteration is specified in the scheduler
         # Reduce the learning rate by the given factor (args.scheduler_lambda)
+        # TODO Remove old scheduler
         if iterations in args.scheduler_steps:
             for params in optimizer.param_groups:
                 params['lr'] *= args.scheduler_lambda
@@ -108,7 +109,8 @@ def train(args, dataloader_train, device, dataset_validation=None):
         
         avg_loss /= len(dataloader_train)
         # Write the loss in tensorflow
-        writer.add_scalar('Loss', avg_loss, iterations)
+        writer.add_scalar('loss', avg_loss, iterations)
+        writer.add_scalar('lr', get_lr(optimizer), iterations)
 
         # loguru logging :
         if iterations % args.log_interval == 0:
@@ -120,7 +122,7 @@ def train(args, dataloader_train, device, dataset_validation=None):
                                                                             get_lr(optimizer),
                                                                             args.batch_size
                                                                             )
-            logger.info(msg) 
+            logger.info(msg)
 
          # Saving checkpoint
         if iterations % args.checkpoint_interval == 0:
