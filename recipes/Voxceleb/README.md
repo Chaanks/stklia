@@ -65,7 +65,7 @@ where 1 indicates both utterances have the same identity, and 0 indicates a diff
 
 ```sh
 wget http://www.robots.ox.ac.uk/~vgg/data/voxceleb/meta/veri_test.txt
-python ../utils/trials_to_veri_pairs.py -i veri_test.txt -o $KALDI_ROOT/egs/voxceleb/v2/data/voxceleb1_nosil/veri_pairs
+python ../utils/vctxt_to_veri_pairs.py -i veri_test.txt -o $KALDI_ROOT/egs/voxceleb/v2/data/voxceleb1_nosil/veri_pairs
 rm veri_text.txt
 ```
 
