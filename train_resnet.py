@@ -16,12 +16,14 @@ from tqdm import tqdm
 from loguru import logger
 from pathlib import Path
 
+import fairscale
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 import dataset
+from seq_res_101 import resnet101
 from models import resnet34, NeuralNetAMSM
 from test_resnet import score_utt_utt
 
@@ -39,13 +41,17 @@ def train(args, dataloader_train, device, dataset_validation=None):
     logger.info("num_classes: " + str(num_classes))
 
     # Generator and classifier definition
-    generator = resnet34(args)
+    
+    # generator = resnet34(args)
+    generator = resnet101()
+    generator = fairscale.nn.Pipe(generator, balance=[76, 76, 76, 75], chunks=8)
+
     classifier = NeuralNetAMSM(args.emb_size, num_classes)
 
     generator.train()
     classifier.train()
 
-    generator = generator.to(device)
+    #generator = generator.to(device)
     classifier = classifier.to(device)
 
     # Load the trained model if we continue from a checkpoint
