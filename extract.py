@@ -13,7 +13,7 @@ from pathlib import Path
 
 import dataset
 from parser import fetch_config
-from models import resnet34
+from models import resnet
 from cuda_test import cuda_test, get_device
 
 if __name__ == "__main__":
@@ -70,7 +70,7 @@ if __name__ == "__main__":
         g_path = args.checkpoints_dir / "g_{}.pt".format(args.checkpoint)
         g_path_test = g_path
 
-    generator = resnet34(args)
+    generator = resnet(args)
     generator.load_state_dict(torch.load(g_path), strict=False)
     generator = generator.to(device)
     generator.eval()

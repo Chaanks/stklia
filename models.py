@@ -168,11 +168,11 @@ class ResNet(nn.Module):
         return self._forward_impl(x)
 
 
-def resnet34(args, **kwargs):
+def resnet(args, **kwargs):
     """ 
-        A small funtion that initialize a resnet 34.
+        A small funtion that initialize a resnet.
         Usage: 
-            model = resnet34()
+            model = resnet()
     """
     model = ResNet(BasicBlock,
                    args.layers,

@@ -22,7 +22,7 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 import dataset
-from models import resnet34, NeuralNetAMSM
+from models import resnet, NeuralNetAMSM
 from test_resnet import score_utt_utt
 
 def get_lr(optimizer):
@@ -39,14 +39,14 @@ def train(args, dataloader_train, device, dataset_validation=None):
     logger.info("num_classes: " + str(num_classes))
 
     # Generator and classifier definition
-    generator = resnet34(args)
-    classifier = NeuralNetAMSM(args.emb_size, num_classes)
+    generator = resnet(args)
+    #classifier = NeuralNetAMSM(args.emb_size, num_classes)
 
     generator.train()
-    classifier.train()
+    #classifier.train()
 
     generator = generator.to(device)
-    classifier = classifier.to(device)
+    #classifier = classifier.to(device)
 
     # Load the trained model if we continue from a checkpoint
     start_iteration = 0
