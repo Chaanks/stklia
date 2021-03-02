@@ -1,4 +1,4 @@
-slurm/logs
+slurm/logs/
 test.py
 speedtest.py
 # Byte-compiled / optimized / DLL files
