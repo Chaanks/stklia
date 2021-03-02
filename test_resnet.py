@@ -23,7 +23,7 @@ from loguru import logger
 
 import dataset
 import data_io
-from models import resnet34
+from models import resnet_basic
 
 @logger.catch
 def compute_spk_xvec(generator, ds, device):
