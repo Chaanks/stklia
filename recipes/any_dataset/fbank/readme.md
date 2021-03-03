@@ -115,7 +115,7 @@ Ce script comporte les arguments suivant :
 - `--feature-out` permet de spécifier le dossier de sortie de features (peut être lourd)
 - `--nj` permet de spécifier le nombre de process lancé en parallel. Attention, un nombre de process supérieur aux nombre de thread du CPU peut entrainer un rallentissement significatif.
 
-Exemples :
+Exemple :
 
 ```
 ./feature-extraction.sh --nj 8 --data-in data/train --data-out data/train-no-sil --features-out features/ --kaldi-path /home/me/kaldi/
@@ -123,90 +123,20 @@ Exemples :
 
 ## Data Augmentation
 
-TODO
+La paramétrisation des données peut parfois nécéssiter de la data augmentation (rajout de bruit et réverbération). Dans ce cas, la paramétrisation des données avec data augmentaion se fait dans le script `data-augmentation.sh`.
 
-# Exemples
+Ce script fonctionne de manière similaire à `feature-extraction.sh` et comporte des arguments similaires :
+- `--help` affiche l'aide
+- `--kaldi-path` le path COMPLET vers l'installation de kaldi
+- `--data-in` permet de spécifier le dossier contenant les fichiers `wav.scp`, `utt2spk` et `spk2utt`.
+- `--data-out` permet de spécifier le dossier de sortie des metadonnées.
+- `--feature-out` permet de spécifier le dossier de sortie de features (peut être lourd)
+- `--nj` permet de spécifier le nombre de process lancé en parallel. Attention, un nombre de process supérieur aux nombre de thread du CPU peut entrainer un rallentissement significatif.
+- `--rirs-root` permet de spécifier le dossier contenant le dataset rirs noises (https://www.openslr.org/28/)
+- `-musan-root` permet de spécifier le dossier contenant le dataset musan (http://www.openslr.org/17/)
 
-## Voxceleb2
-Je veux préparer les données de voxceleb2.
-
-### Etape 1
-
-J'installe kaldi dans `/home/me/kaldi/` :
-```
-cd /home/me/
-git clone https://github.com/kaldi-asr/kaldi.git kaldi –origin upstream
-cd kaldi/tools
-extras/check_dependencies.sh
-make
-```
-
-### Etape 2
-
-Je copie le dossier dans `kaldi/egs/`
-```
-cp -r ... /home/kaldi/egs/my_voxceleb2/
-```
-
-Ainsi, j'obtiens la suite de dossiers `/home/me/kaldi/egs/my_voxceleb2/fbank/`
-
-### Etape 3
-
-Je télécharge voxceleb2 , et le place sur mon second disque dur :
-```
-cd /media/me/hdd/dataset/voxceleb2/
-wget ...
-```
-
-Je crée le dossier `/home/me/kaldi/egs/my_voxceleb2/fbank/data/train`.
-
-Dans ce dossier, je génère le fichier wav.scp avec :
-```python
-import os
-
-path = "/media/me/hdd/dataset/voxceleb2/[...]/wavs/"
-with open("wav.scp", "w") as fout:
-    for wav in os.listdir(path):
-        fout.write(f"{wav.replace('.wav', '')} {path}{wav}\n")
-```
-
-et utt2spk avec :
-[TODO]
-
-enfin, je génère spk2utt avec la commande :
-```
-./home/me/kaldi/egs/wsj/s5/utils/utt2spk_to_spk2utt.pl /home/me/kaldi/egs/my_voxceleb2/fbank/data/train/utt2spk > /home/me/kaldi/egs/my_voxceleb2/fbank/data/train/spk2utt
-```
-
-### Etape 4
-
-Voxceleb sera utilisé pour entrainer mon systême, je veux donc de la data augmentation.
-Mon CPU comporte 8 thread, je vais donc utiliser 8 jobs.
-Et je veux utiliser les données du dossier `train`, donc la commande est :
+Exemple:
 
 ```
-cd /home/me/kaldi/egs/my_voxceleb2/fbank/
-./fbank.sh --data-folder train --nj 8 --data-aug true
+./data-augmentation.sh --nj 8 --data-in data/train --data-out data/train-aug-no-sil --features-out features-aug/ --kaldi-root /home/me/kaldi --rirs-root RIRS_NOISES --musan-root musan
 ```
-
-Apres le calcul, j'obtiens le dossier `/home/me/kaldi/egs/my_voxceleb2/fbank/data/train_all_no_sil/` contenant les métadonnées.
-
-# TIPS and TRICKS
-
-Le dossier `kaldi/egs/my_dataset/fbank/fbank/` contient toutes les fbanks du dataset et peut donc être conséquent.
-S'il n'est pas présent, il sera créé lors de l'enxecution de `fbank.sh`.
-Il peut être préférable de créer un lien symbolique vers un dossier contenu sur un disque dur non SSD.
-
-# Info générales sur kaldi
-
-## Dossiers
-
-Description de la structure des dossiers et leurs rôles
-
-## Fichiers 
-
-Description des fichiers utilisés par kaldi et leurs rôles
-
-### ark & scp
-
-TODO

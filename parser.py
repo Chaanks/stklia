@@ -42,7 +42,7 @@ def fetch_config(args, verbose=False):
     args.features_per_frame  = config['Dataset'].getint('features_per_frame', fallback=30)
     # try to parse a train dataset
     try:
-        args.train_data_path = [check_file_exist(Path(p)) for p in config['Dataset']['train'].split()]
+        args.train_data_path = [Path(p) for p in config['Dataset']['train'].split()]
     except KeyError:
         args.train_data_path = None
     # try to parse a eval dataset

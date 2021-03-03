@@ -1,4 +1,5 @@
 slurm*
+run.sh
 *.out
 cfg/*
 recipes/any_dataset/fbank/data
