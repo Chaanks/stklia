@@ -42,6 +42,7 @@ export LC_ALL=C" > path.sh
 #   --fbank-config         config passed to compute-fbank-feats.
 #   --cmd allows           us to choose between multiple type of execution (queue or run)
 #   --write-utt2num-frames writes the session lenght in utt2num_frames file.
+utils/fix_data_dir.sh ${data_in}
 steps/make_fbank.sh --write-utt2num-frames true --fbank-config $fbank_config --nj $nj --cmd "run.pl" ${data_in} $exp_out/make_fbank ${features_out}
 
 # fix_data_dir.sh <data-dir>
