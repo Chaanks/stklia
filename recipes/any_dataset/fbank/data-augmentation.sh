@@ -13,21 +13,20 @@ rirs_root=RIRS_NOISES
 min_len=400
 fbank_config=conf/fbank.conf
 data_in=data/train
-data_out=data/train-aug-no-sil
-features_out=features-aug
-vad_out=vad
+features_out=feats/
+exp_out=log
 kaldi_root=/home/$USER/kaldi/
 help_message="Usage: $0 [options]
 Options:
     --nj <nj>      # number of parallel jobs.
     --data-in      # the path of the data input folder
-    --data-out     # the path of the data output folder
     --features-out # the path of the feature output folder (can be heavy)
     --kaldi-root   # the path to the kaldi install folder 
     --rirs-root    # the path to the the rirs noises dataset (https://www.openslr.org/28/)
     --musan-root   # the path to the musan dataset (http://www.openslr.org/17/)
 Exemple:
-    ./data-augmentation.sh --nj 8 --data-in data/train --data-out data/train-aug-no-sil --features-out features-aug/ --kaldi-root /home/me/kaldi --rirs-root RIRS_NOISES --musan-root musan
+    ./data-augmentation.sh --nj 8 --data-in data/train --features-out feats/ --kaldi-root /home/me/kaldi --rirs-root RIRS_NOISES --musan-root musan
+    will procude the folder data/train_combined_no_sil
 "
 
 # Parse command-line options :
@@ -58,11 +57,11 @@ steps/data/reverberate_data_dir.py \
     --isotropic-noise-addition-probability 0 \
     --num-replications 1 \
     --source-sampling-rate 16000 \
-    ${data_in} data/$(basename ${data_in})_reverb
-cp ${data_in}/vad.scp data/$(basename ${data_in})_reverb/
-utils/copy_data_dir.sh --utt-suffix "-reverb" data/$(basename ${data_in})_reverb data/$(basename ${data_in})_reverb.new
-rm -rf data/$(basename ${data_in})_reverb
-mv data/$(basename ${data_in})_reverb.new data/$(basename ${data_in})_reverb
+    ${data_in} ${data_in}_reverb
+cp ${data_in}/vad.scp ${data_in}_reverb/
+utils/copy_data_dir.sh --utt-suffix "-reverb" ${data_in}_reverb ${data_in}_reverb.new
+rm -rf ${data_in}_reverb
+mv ${data_in}_reverb.new ${data_in}_reverb
 
 # Prepare the MUSAN corpus, which consists of music, speech, and noise
 # suitable for augmentation.
@@ -76,27 +75,28 @@ for name in speech noise music; do
 done
 
 # Augment with musan_noise
-steps/data/augment_data_dir.py --utt-suffix "noise" --fg-interval 1 --fg-snrs "15:10:5:0" --fg-noise-dir "data/musan_noise" ${data_in} data/$(basename ${data_in})_noise_
+steps/data/augment_data_dir.py --utt-suffix "noise" --fg-interval 1 --fg-snrs "15:10:5:0" --fg-noise-dir "data/musan_noise" ${data_in} ${data_in}_noise
 # Augment with musan_music
-steps/data/augment_data_dir.py --utt-suffix "music" --bg-snrs "15:10:8:5" --num-bg-noises "1" --bg-noise-dir "data/musan_music" ${data_in} data/$(basename ${data_in})_music
+steps/data/augment_data_dir.py --utt-suffix "music" --bg-snrs "15:10:8:5" --num-bg-noises "1" --bg-noise-dir "data/musan_music" ${data_in} ${data_in}_music
 # Augment with musan_speech
-steps/data/augment_data_dir.py --utt-suffix "babble" --bg-snrs "20:17:15:13" --num-bg-noises "3:4:5:6:7" --bg-noise-dir "data/musan_speech" ${data_in} data/$(basename ${data_in})_babble
+steps/data/augment_data_dir.py --utt-suffix "babble" --bg-snrs "20:17:15:13" --num-bg-noises "3:4:5:6:7" --bg-noise-dir "data/musan_speech" ${data_in} ${data_in}_babble
 
 # Combine reverb, noise, music, and babble into one directory.
-utils/combine_data.sh data/$(basename ${data_in})_noise data/$(basename ${data_in})_reverb data/$(basename ${data_in})_noise_ data/$(basename ${data_in})_music data/$(basename ${data_in})_babble
+utils/combine_data.sh ${data_in}_aug ${data_in}_reverb ${data_in}_noise ${data_in}_music ${data_in}_babble
 
 # Make Fbank for the augmented data.  Note that we do not compute a new
 # vad.scp file here.  Instead, we use the vad.scp from the clean version of
 # the list.
-steps/make_fbank.sh --fbank-config $fbank_config --nj $nj --cmd "run.pl" data/$(basename ${data_in})_noise exp/make_fbank $features_out
-utils/fix_data_dir.sh data/$(basename ${data_in})_noise
+steps/make_fbank.sh --fbank-config $fbank_config --nj $nj --cmd "run.pl" ${data_in}_aug exp/make_fbank $features_out/$(basename ${data_in})_aug
+utils/fix_data_dir.sh ${data_in}_aug
 
 # Combine the clean and augmented VoxCeleb2 list.  This is now roughly
 # double the size of the original clean list.
-utils/combine_data.sh data/$(basename ${data_in})_aug data/$(basename ${data_in})_noise ${data_in}
+utils/combine_data.sh ${data_in}_combined ${data_in}_aug ${data_in}
 
 # This script applies CMVN and removes nonspeech frames.
-local/nnet3/xvector/prepare_feats_for_egs.sh --nj $nj --cmd "run.pl" data/$(basename ${data_in})_aug $data_out exp/$(basename ${data_in})_aug_no_sil
+data_out=${data_in}_combined_no_sil
+local/nnet3/xvector/prepare_feats_for_egs.sh --nj $nj --cmd "run.pl" ${data_in}_combined $data_out $features_out/$(basename ${data_in})_combined_no_sil
 utils/fix_data_dir.sh $data_out
 
 # Removes the utt that are shorter than min_len

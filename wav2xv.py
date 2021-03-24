@@ -49,6 +49,8 @@ if __name__ == "__main__":
         help="The output file you want the x-vector in.")
     parser.add_argument('--kaldi', type=str, required=True,
         help="The path to the kaldi installation.")
+    parser.add_argument('--tmp', type=str, default='.tmp/',
+        help="The temporary directory")
     # parser.add_argument("-f", "--format", type=str, choices=["ark", "txt"], default="txt",
     #   help="The output format you want the x-vectors in.")
 
@@ -62,23 +64,17 @@ if __name__ == "__main__":
 
     # Create .tmp dir and subdirectories
     print("Creating tmp folders")
-    tmp_folder = Path(".tmp/")
+    tmp_folder = Path(args.tmp)
     tmp_folder.mkdir(parents=True, exist_ok=True)
 
     data_folder = tmp_folder / "data"
     data_folder.mkdir(parents=True, exist_ok=True)
-    
-    fbank_folder = tmp_folder / "fbanks"
-    fbank_folder.mkdir(parents=True, exist_ok=True)
 
     feature_folder = tmp_folder / "feats"
     feature_folder.mkdir(parents=True, exist_ok=True)
 
     exp_folder = tmp_folder / "exp"
     exp_folder.mkdir(parents=True, exist_ok=True)
-
-    vad_folder = tmp_folder / "vad"
-    vad_folder.mkdir(parents=True, exist_ok=True)
 
     # Create wav.scp, spk2utt, utt2spk files in .tmp/data/ dir
 
@@ -102,7 +98,7 @@ if __name__ == "__main__":
             f.write(f"{wav.stem} {wav.stem}\n")
 
     # Call feature-extraction on .tmp/data/
-    cmd = f'./feature-extraction.sh --nj 1 --data-in {data_folder.absolute()} --data-out {feature_folder.absolute()} --features-out {fbank_folder.absolute()} --kaldi-root {args.kaldi.absolute()} --vad-out {vad_folder.absolute()} --exp-out {exp_folder.absolute()}'
+    cmd = f'./feature-extraction.sh --nj 1 --data-in {data_folder.absolute()} --features-out {feature_folder.absolute()} --kaldi-root {args.kaldi.absolute()} --exp-out {exp_folder.absolute()}'
     print(f"running :\n{cmd}")
 
     # Since the script feature-extraction.sh works in relative paths,
@@ -115,7 +111,7 @@ if __name__ == "__main__":
 
     # Load dataset from .tmp/egs
     print("Generating dataset object")
-    ds_extract = dataset.make_kaldi_ds(feature_folder.absolute(), seq_len=None, evaluation=True)
+    ds_extract = dataset.make_kaldi_ds(Path(str(data_folder.absolute()) + "_no_sil"), seq_len=None, evaluation=True)
 
     # Load system
     print('Loading config fron experiment_settings.cfg')
