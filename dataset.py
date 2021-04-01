@@ -15,12 +15,12 @@ import data_io
 
 import torch
 import numpy as np
-from kaldi_io import read_mat
+from kaldi_io import read_mat, read_vec_flt
 from torch.utils.data import Dataset
 from sklearn.preprocessing import LabelEncoder
 
+MASTER_EMBS = '/local_disk/arges/jduret/git/stklia/exp/RESNET34_256_statistical/xvectors/train_combined_no_sil'
 
-# Dataset class
 class SpeakerDataset(Dataset):
     """ Characterizes a dataset for Pytorch """
     def __init__(self, utt2path, utt2spk, spk2utt, loading_method, seq_len=None, evaluation=False, trials=None):
@@ -72,6 +72,71 @@ class SpeakerDataset(Dataset):
             feats = self.trans(feats, self.seq_len)
 
         return feats, spk, utt
+    
+    def get_utt_feats(self, utt):
+        feats = self.loading_method(self.utt2path[utt])
+        if self.seq_len:
+            feats = self.trans(feats, self.seq_len)
+
+        return feats
+
+        
+class SpeakerDatasetMaster(Dataset):
+    """ Characterizes a dataset for Pytorch """
+    def __init__(self, utt2path, utt2spk, spk2utt, loading_method, seq_len=None, evaluation=False, trials=None):
+
+        self.utt2path = utt2path
+        self.loading_method = loading_method
+        self.utt_list = list(utt2spk.keys())
+
+        self.utts, self.uspkrs = list(utt2spk.keys()), list(utt2spk.values())
+
+        self.label_enc = LabelEncoder()
+
+        self.spkrs, self.spkutts = list(spk2utt.keys()), list(spk2utt.values())
+        self.spkrs = self.label_enc.fit_transform(self.spkrs)
+        self.spk2utt = OrderedDict({k: v for k, v in zip(self.spkrs, self.spkutts)})
+
+        self.uspkrs = self.label_enc.transform(self.uspkrs)
+        self.utt2spk = OrderedDict({k: v for k, v in zip(self.utts, self.uspkrs)})
+
+        self.seq_len = seq_len
+        self.evaluation = evaluation
+        self.num_classes = len(self.label_enc.classes_)
+
+        self.trans = data_io.test_transform if self.evaluation else data_io.train_transform
+
+        self.trials = trials
+        # assert (self.trials == None) and (evaluation == True), "No trials given while on eval mode"
+
+        ### Master Student
+
+        self.utt2embs = data_io.read_scp(Path(MASTER_EMBS) / 'xvectors.scp')
+
+    def __repr__(self):
+        return f"SpeakerDataset w/ {len(self.spk2utt)} speakers and {len(self.utt2spk)} sessions. eval={self.evaluation}"
+
+    def __len__(self):
+        if self.evaluation:
+            return len(self.utt_list)
+        return len(self.spk2utt)
+
+    def __getitem__(self, idx):
+        """ Returns one random utt of selected speaker """
+
+        if self.evaluation:
+            utt = self.utt_list[idx]
+        else:
+            utt = np.random.choice(self.spk2utt[idx])
+
+        spk = self.utt2spk[utt]
+        feats = self.loading_method(self.utt2path[utt])
+        embs = torch.FloatTensor(read_vec_flt(self.utt2embs[utt]).copy())
+
+        if self.seq_len:
+            feats = self.trans(feats, self.seq_len)
+
+        return feats, embs, utt
     
     def get_utt_feats(self, utt):
         feats = self.loading_method(self.utt2path[utt])

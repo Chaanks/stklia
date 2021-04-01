@@ -25,7 +25,7 @@ from parser import fetch_config
 from cuda_test import cuda_test, get_device
 from train_resnet import train
 from test_resnet import score_utt_utt
-from models import resnet34
+from models import resnet
 
 if __name__ == "__main__":
 
@@ -90,7 +90,7 @@ if __name__ == "__main__":
             g_path = args.checkpoints_dir / "g_{}.pt".format(args.checkpoint)
             g_path_test = g_path
 
-        model = resnet34(args)
+        model = resnet(args)
         model.load_state_dict(torch.load(g_path), strict=False)
         model = model.to(device)
 

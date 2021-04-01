@@ -10,53 +10,42 @@ import kaldi_io
 from tqdm import tqdm
 from pathlib import Path
 
-
 import dataset
 from parser import fetch_config
-from models import resnet
+from models import resnet, NeuralNetAMSM, XTDNN, LightCNN
 from cuda_test import cuda_test, get_device
 
 if __name__ == "__main__":
     # Arguments parsing
     parser = argparse.ArgumentParser(description='Extract the xvectors of a dataset given a model. (xvectors will be extracted in <model_dir>/xvectors/<checkpoint>/)')
 
-    parser.add_argument("-m", "--modeldir", type=str, required=True, help="The path to the model directory you want to extract the xvectors with. This dir should containt the file experiement.cfg")
+    parser.add_argument("-m", "--model_dir", type=str, required=True, help="The path to the model directory you want to extract the xvectors with. This dir should containt the file experiement.cfg")
+    parser.add_argument('-o', '--out_dir', type=str, required=True, help='The path where extract the xvectors')
+    parser.add_argument('-d', '--data_dir', type=str, required=True, help='The path were datataset is located')
     parser.add_argument('--checkpoint', '--resume-checkpoint', type=int, default=-1,
                             help="Model Checkpoint to use. Default (-1) : use the last one ")
-    parser.add_argument("-d", '--data', type=str, required=True, help="Path to the kaldi data folder to extract (Should contain spk2utt, utt2spk and feats.scp).")
     parser.add_argument("-f", "--format", type=str, choices=["ark", "txt", "pt"], default="ark", help="The output format you want the x-vectors in.")
-
     args = parser.parse_args()
-    args.modeldir = Path(args.modeldir)
+    args.model_dir = Path(args.model_dir)
 
-    set_res_file = Path(args.modeldir) / "experiment_settings_resume.cfg"
-    args.cfg = set_res_file if set_res_file.is_file() else Path(args.modeldir) / "experiment_settings.cfg"
+    # Check that de cfg file exist
+    set_res_file = Path(args.model_dir) / "experiment_settings_resume.cfg"
+    args.cfg = set_res_file if set_res_file.is_file() else Path(args.model_dir) / "experiment_settings.cfg"
     assert args.cfg.is_file(), f"No such file {args.cfg}"
 
-    args = fetch_config(args) 
+    args = fetch_config(args)
 
-    # Find the right data path
-    try:
-        data_path = {"train":args.train_data_path,
-                     "eval" :args.eval_data_path,
-                     "test" :args.test_data_path }[args.data]
-    except KeyError:
-        data_path = Path(args.data)
-
-    if data_path == None:
-        raise KeyError("No dataset {0} in {1} file while given {0} as --data".format(args.data, args.cfg))
+    # Check that the output folder exist
+    args.out_dir = Path(args.out_dir)
+    assert args.out_dir.is_dir(), f"No such directory {args.out_dir}"
     
-    if isinstance(data_path, list):
-        assert any(d.is_dir() for d in data_path), f"No such dir {data_path}"
-        out_dir = args.model_dir.resolve() / "xvectors" / f"{args.data}_data"
-    elif isinstance(data_path, Path):
-        assert data_path.is_dir(), f"No such dir {data_path}"
-        out_dir = args.model_dir.resolve() / "xvectors" / str(data_path.name)
-    else:
-        raise TypeError("This should not append, contact dev :(")
+    # Check that the dataset path exist
+    args.data_dir = Path(args.data_dir)
+    assert args.data_dir.is_dir(), f"No such directory {args.out_dir}"
+    ds_extract = dataset.make_kaldi_ds(args.data_dir, seq_len=50000, evaluation=True)
 
-    out_dir.mkdir(parents=True, exist_ok=True)
-    ds_extract = dataset.make_kaldi_ds(data_path, seq_len=None, evaluation=True)
+    args.out_dir = Path(args.out_dir) / args.model_dir.stem / args.data_dir.stem
+    args.out_dir.mkdir(parents=True, exist_ok=True)
 
     cuda_test()
     device = get_device(not args.no_cuda)
@@ -70,7 +59,16 @@ if __name__ == "__main__":
         g_path = args.checkpoints_dir / "g_{}.pt".format(args.checkpoint)
         g_path_test = g_path
 
-    generator = resnet(args)
+    # Generator and classifier definition
+    if args.model == 'RESNET':
+        generator = resnet(args)
+    elif args.model == 'XTDNN':
+        generator = XTDNN()
+    elif args.model == 'CNN':
+        generator = LightCNN()
+
+    #generator = resnet(args)
+
     generator.load_state_dict(torch.load(g_path), strict=False)
     generator = generator.to(device)
     generator.eval()
@@ -78,10 +76,10 @@ if __name__ == "__main__":
     # Extract xv
     if args.format in ["ark", "txt"]:
         if args.format == "ark":
-            ark_scp_xvector = f'ark:| copy-vector ark:- ark,scp:{out_dir}/xvectors.ark,{out_dir}/xvectors.scp'
+            ark_scp_xvector = f'ark:| copy-vector ark:- ark,scp:{args.out_dir}/xvectors.ark,{args.out_dir}/xvectors.scp'
             mode = "wb"
         if args.format == "txt":
-            ark_scp_xvector = f'ark:| copy-vector ark:- ark,t:{out_dir}/xvectors.txt'
+            ark_scp_xvector = f'ark:| copy-vector ark:- ark,t:{args.out_dir}/xvectors.txt'
             mode = "w"
 
         with kaldi_io.open_or_fd(ark_scp_xvector, mode) as f:
@@ -91,14 +89,4 @@ if __name__ == "__main__":
                     feats = feats.unsqueeze(0).unsqueeze(1).to(device)
                     embeds = generator(feats).cpu().numpy()
                     kaldi_io.write_vec_flt(f, embeds[0], key=utt)
-
-    if args.format == "pt":
-        out_dir = out_dir / "xvectors_pt/"
-        out_dir.mkdir(parents=True, exist_ok=True)
-        with torch.no_grad():
-            for i in tqdm(range(len(ds_extract))):
-                feats, _, utt = ds_extract.__getitem__(i)
-                feats = feats.unsqueeze(0).unsqueeze(1).to(device)
-                embeds = generator(feats).cpu().numpy()
-                torch.save(embeds[0], out_dir / f"{utt}.pt")
     

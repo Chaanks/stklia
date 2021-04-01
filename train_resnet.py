@@ -22,7 +22,7 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 import dataset
-from models import resnet, NeuralNetAMSM
+from models import resnet, NeuralNetAMSM, XTDNN, LightCNN
 from test_resnet import score_utt_utt
 
 def get_lr(optimizer):
@@ -39,40 +39,51 @@ def train(args, dataloader_train, device, dataset_validation=None):
     logger.info("num_classes: " + str(num_classes))
 
     # Generator and classifier definition
-    generator = resnet(args)
+    if args.model == 'RESNET':
+        generator = resnet(args)
+    elif args.model == 'XTDNN':
+        generator = XTDNN()
+    elif args.model == 'CNN':
+        generator = LightCNN()
+
     #classifier = NeuralNetAMSM(args.emb_size, num_classes)
 
     generator.train()
-    #classifier.train()
+    #classifier.eval()
 
     generator = generator.to(device)
     #classifier = classifier.to(device)
 
     # Load the trained model if we continue from a checkpoint
     start_iteration = 0
-    if args.checkpoint > 0:
-        start_iteration = args.checkpoint
-        for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
-            model.load_state_dict(torch.load(args.checkpoints_dir / f'{modelstr}_{args.checkpoint}.pt'))
+    # if args.checkpoint > 0:
+    #     start_iteration = args.checkpoint
+    #     for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
+    #         model.load_state_dict(torch.load(args.checkpoints_dir / f'{modelstr}_{args.checkpoint}.pt'))
     
-    elif args.checkpoint == -1:
-        start_iteration = max([int(filename.stem[2:]) for filename in args.checkpoints_dir().iterdir()])
-        for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
-            model.load_state_dict(torch.load(args.checkpoints_dir / f'{modelstr}_{start_iteration}.pt'))
+    # elif args.checkpoint == -1:
+    #     start_iteration = max([int(filename.stem[2:]) for filename in args.checkpoints_dir().iterdir()])
+    #     for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
+    #         model.load_state_dict(torch.load(args.checkpoints_dir / f'{modelstr}_{start_iteration}.pt'))
+
+    #classifier.load_state_dict(torch.load('local_disk/arges/jduret/git/stklia/exp/RESNET34_256_statistical/final_c_8000.pt'))
+
+    # for p in classifier.parameters():
+    #     p.requires_grad = False
 
     # Optimizer definition
-    optimizer = torch.optim.SGD([{'params': generator.parameters(), 'lr': args.generator_lr},
-                                 {'params': classifier.parameters(), 'lr': args.classifier_lr}],
+    optimizer = torch.optim.SGD([{'params': generator.parameters(), 'lr': args.generator_lr}],
                                 momentum=args.momentum)
 
-    criterion = nn.CrossEntropyLoss()
+    #criterion = nn.CrossEntropyLoss()
+    criterion = nn.MSELoss()
 
     # multi GPU support :
     if args.multi_gpu:
         dpp_generator = nn.DataParallel(generator).to(device)
     
     if dataset_validation is not None:
-        best_eer = {v.name:{'eer':1, 'ite':-1} for v in dataset_validation.trials} # best eer of all iterations
+        best_eer = {v.name:{'eer':100, 'ite':-1} for v in dataset_validation.trials} # best eer of all iterations
 
     start = time.process_time()
     for iterations in range(start_iteration, args.num_iterations + 1):
@@ -84,9 +95,9 @@ def train(args, dataloader_train, device, dataset_validation=None):
             print(optimizer)
 
         avg_loss = 0
-        for feats, spk, utt in dataloader_train:
+        for feats, targets, _ in dataloader_train:
             feats = feats.unsqueeze(1).to(device)
-            spk = torch.LongTensor(spk).to(device)
+            targets = targets.to(device)
 
             # Creating embeddings
             if args.multi_gpu:
@@ -95,10 +106,10 @@ def train(args, dataloader_train, device, dataset_validation=None):
                 embeds = generator(feats)
 
             # Classify embeddings
-            preds = classifier(embeds, spk)
+            #preds = classifier(embeds, targets)
 
             # Calc the loss
-            loss = criterion(preds, spk)
+            loss = criterion(embeds, targets)
 
             # Backpropagation
             optimizer.zero_grad()
@@ -109,6 +120,8 @@ def train(args, dataloader_train, device, dataset_validation=None):
         avg_loss /= len(dataloader_train)
         # Write the loss in tensorflow
         writer.add_scalar('Loss', avg_loss, iterations)
+        writer.add_scalar('lr', get_lr(optimizer), iterations)
+
 
         # loguru logging :
         if iterations % args.log_interval == 0:
@@ -125,7 +138,7 @@ def train(args, dataloader_train, device, dataset_validation=None):
          # Saving checkpoint
         if iterations % args.checkpoint_interval == 0:
             
-            for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
+            for model, modelstr in [(generator, 'g')]:
                 model.eval().cpu()
                 cp_model_path = args.checkpoints_dir / f"{modelstr}_{iterations}.pt"
                 torch.save(model.state_dict(), cp_model_path)
@@ -149,7 +162,7 @@ def train(args, dataloader_train, device, dataset_validation=None):
             logger.info(f"Saved checkpoint at iteration {iterations}")
 
     # Final model saving
-    for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
+    for model, modelstr in [(generator, 'g')]:
         model.eval().cpu()
         cp_filename = "final_{}_{}.pt".format(modelstr, iterations)
         cp_model_path = args.model_dir / cp_filename

@@ -60,6 +60,7 @@ def fetch_config(args, verbose=False):
         args.test_data_path  = None
         args.test_trials_path = None
 
+    args.model = config['Model'].get('model', fallback='RESNET')
     args.emb_size = config['Model'].getint('emb_size', fallback=256)
     args.layers = np.array(json.loads(config.get('Model', 'layers'))).astype(int)
     args.num_filters = np.array(json.loads(config.get('Model', 'num_filters'))).astype(int)
