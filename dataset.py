@@ -185,7 +185,7 @@ def make_kaldi_ds(ds_path, seq_len=400, evaluation=False, trials=None):
             except KeyError:
                 spk2utt[spk] = utts
 
-    ds = SpeakerDataset(
+    ds = SpeakerDatasetMaster(
         utt2path = utt2path,
         utt2spk  = utt2spk,
         spk2utt  = spk2utt,
