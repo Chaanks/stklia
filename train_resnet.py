@@ -10,6 +10,7 @@ __author__ = "Duret Jarod, Brignatz Vincent"
 __license__ = "MIT"
 
 import time
+import copy
 import numpy as np
 
 from tqdm import tqdm
@@ -46,37 +47,43 @@ def train(args, dataloader_train, device, dataset_validation=None):
     elif args.model == 'CNN':
         generator = LightCNN()
 
-    #classifier = NeuralNetAMSM(args.emb_size, num_classes)
+
+    # Weight Initialization
+    generator.apply(weight_init)
+
+    # Copying and Saving Initial State
+    initial_state_dict = copy.deepcopy(generator.state_dict())
+
+    save_dir = args.model_dir / 'saves'
+    save_dir.mkdir(parents=True, exist_ok=True)
+    torch.save(generator, save_dir / f"/initial_state_dict_{args.prune_type}.pth.tar")
+    
+    
+    classifier = NeuralNetAMSM(args.emb_size, num_classes)
 
     generator.train()
-    #classifier.eval()
+    classifier.train()
 
     generator = generator.to(device)
-    #classifier = classifier.to(device)
+    classifier = classifier.to(device)
 
     # Load the trained model if we continue from a checkpoint
     start_iteration = 0
-    # if args.checkpoint > 0:
-    #     start_iteration = args.checkpoint
-    #     for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
-    #         model.load_state_dict(torch.load(args.checkpoints_dir / f'{modelstr}_{args.checkpoint}.pt'))
+    if args.checkpoint > 0:
+        start_iteration = args.checkpoint
+        for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
+            model.load_state_dict(torch.load(args.checkpoints_dir / f'{modelstr}_{args.checkpoint}.pt'))
     
-    # elif args.checkpoint == -1:
-    #     start_iteration = max([int(filename.stem[2:]) for filename in args.checkpoints_dir().iterdir()])
-    #     for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
-    #         model.load_state_dict(torch.load(args.checkpoints_dir / f'{modelstr}_{start_iteration}.pt'))
-
-    #classifier.load_state_dict(torch.load('local_disk/arges/jduret/git/stklia/exp/RESNET34_256_statistical/final_c_8000.pt'))
-
-    # for p in classifier.parameters():
-    #     p.requires_grad = False
+    elif args.checkpoint == -1:
+        start_iteration = max([int(filename.stem[2:]) for filename in args.checkpoints_dir().iterdir()])
+        for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
+            model.load_state_dict(torch.load(args.checkpoints_dir / f'{modelstr}_{start_iteration}.pt'))
 
     # Optimizer definition
-    optimizer = torch.optim.SGD([{'params': generator.parameters(), 'lr': args.generator_lr}],
-                                momentum=args.momentum)
+    optimizer = torch.optim.SGD([{'params': generator.parameters(), 'lr': args.generator_lr},
+                                 {'params': classifier.parameters(), 'lr': args.classifier_lr}],
 
-    #criterion = nn.CrossEntropyLoss()
-    criterion = nn.MSELoss()
+    criterion = nn.CrossEntropyLoss()
 
     # multi GPU support :
     if args.multi_gpu:
@@ -106,10 +113,10 @@ def train(args, dataloader_train, device, dataset_validation=None):
                 embeds = generator(feats)
 
             # Classify embeddings
-            #preds = classifier(embeds, targets)
+            preds = classifier(embeds, targets)
 
             # Calc the loss
-            loss = criterion(embeds, targets)
+            loss = criterion(preds, targets)
 
             # Backpropagation
             optimizer.zero_grad()
@@ -138,7 +145,7 @@ def train(args, dataloader_train, device, dataset_validation=None):
          # Saving checkpoint
         if iterations % args.checkpoint_interval == 0:
             
-            for model, modelstr in [(generator, 'g')]:
+            for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
                 model.eval().cpu()
                 cp_model_path = args.checkpoints_dir / f"{modelstr}_{iterations}.pt"
                 torch.save(model.state_dict(), cp_model_path)
@@ -161,8 +168,9 @@ def train(args, dataloader_train, device, dataset_validation=None):
                 logger.success(msg)
             logger.info(f"Saved checkpoint at iteration {iterations}")
 
+
     # Final model saving
-    for model, modelstr in [(generator, 'g')]:
+    for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
         model.eval().cpu()
         cp_filename = "final_{}_{}.pt".format(modelstr, iterations)
         cp_model_path = args.model_dir / cp_filename

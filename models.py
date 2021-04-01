@@ -379,10 +379,13 @@ class LightCNN(nn.Module):
         super(LightCNN, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1,bias=False)
         self.bn1 = nn.BatchNorm2d(32)
+
         self.conv2 = conv3x3(32, 64)
         self.bn2 = nn.BatchNorm2d(64)
+
         self.conv3 = conv3x3(64, 128)
         self.bn3 = nn.BatchNorm2d(128)
+        
         self.relu = nn.ReLU(inplace=True)
 
         self.pooling_mode = 'statistical'

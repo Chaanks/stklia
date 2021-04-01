@@ -68,6 +68,12 @@ def fetch_config(args, verbose=False):
     args.pooling = config['Model'].get('pooling', fallback='statistical')
     assert args.pooling in ['min', 'max', 'mean', 'std', 'statistical', 'std_skew', 'std_kurtosis'], f"Unknow pooling mode {args.pooling}"
 
+    # Lottery ticket
+    args.prune_type =  config['Lottery'].get('prune_type', fallback='lt')
+    assert args.prune_type in ['lt', 'rd']
+    args.prune_percent = config['Lottery'].getint('prune_percent', fallback=10)
+    args.prune_iterations = config['Lottery'].getint('prune_iterations', fallback=35)
+
     args.model_dir           = Path(config['Outputs']['model_dir'])
     args.checkpoints_dir     = args.model_dir / 'checkpoints/'
     args.log_file            = args.model_dir / 'train.log'
