@@ -98,7 +98,7 @@ if __name__ == "__main__":
             f.write(f"{wav.stem} {wav.stem}\n")
 
     # Call feature-extraction on .tmp/data/
-    cmd = f'./feature-extraction.sh --nj 1 --data-in {data_folder.absolute()} --features-out {feature_folder.absolute()} --kaldi-root {args.kaldi.absolute()} --exp-out {exp_folder.absolute()}'
+    cmd = f'./feature-extraction.sh --nj 1 --data-in {data_folder.absolute()} --features-out {feature_folder.absolute()} --kaldi-root {args.kaldi.absolute()} --vad-out {vad_folder.absolute()} --exp-out {exp_folder.absolute()}'
     print(f"running :\n{cmd}")
 
     # Since the script feature-extraction.sh works in relative paths,
@@ -145,4 +145,4 @@ if __name__ == "__main__":
                 fout.write(f"{utt} {array_str(embeds, max_line_width=1000000)}\n")
 
     # Delete folder .tmp
-    run('rm -r .tmp'.split(' '))
+    run(f'rm -r {tmp_folder}'.split(' '))
