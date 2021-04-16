@@ -42,7 +42,7 @@ if __name__ == "__main__":
         #slurm.add_arguments(array=range(0, 2))
         slurm.add_arguments(cpus_per_task='8')
         slurm.add_arguments(partition='gpu')
-        if k == 'sitw':
+        if 'sitw' in k:
             slurm.add_arguments(gpus_per_node='tesla_p100:1')
         else:
             slurm.add_arguments(gpus_per_node='1')

@@ -42,7 +42,8 @@ if __name__ == "__main__":
     # Check that the dataset path exist
     args.data_dir = Path(args.data_dir)
     assert args.data_dir.is_dir(), f"No such directory {args.out_dir}"
-    ds_extract = dataset.make_kaldi_ds(args.data_dir, seq_len=50000, evaluation=True)
+    ds_extract = dataset.make_kaldi_ds_eval(args.data_dir, seq_len=5000, evaluation=True)
+    print(ds_extract)
 
     args.out_dir = Path(args.out_dir) / args.model_dir.stem / args.data_dir.stem
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -85,7 +86,7 @@ if __name__ == "__main__":
         with kaldi_io.open_or_fd(ark_scp_xvector, mode) as f:
             with torch.no_grad():
                 for i in tqdm(range(len(ds_extract))):
-                    feats, _, utt = ds_extract.__getitem__(i)
+                    feats, utt = ds_extract.__getitem__(i)
                     feats = feats.unsqueeze(0).unsqueeze(1).to(device)
                     embeds = generator(feats).cpu().numpy()
                     kaldi_io.write_vec_flt(f, embeds[0], key=utt)

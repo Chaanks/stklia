@@ -17,6 +17,7 @@ from tqdm import tqdm
 from loguru import logger
 from pathlib import Path
 
+import pickle
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -25,6 +26,7 @@ from torch.utils.tensorboard import SummaryWriter
 import dataset
 from models import resnet, NeuralNetAMSM, XTDNN, LightCNN
 from test_resnet import score_utt_utt
+from lottery_ticket import weight_init, make_mask, prune_by_percentile, original_initialization, print_nonzeros
 
 def get_lr(optimizer):
     for param_group in optimizer.param_groups:
@@ -47,6 +49,7 @@ def train(args, dataloader_train, device, dataset_validation=None):
     elif args.model == 'CNN':
         generator = LightCNN()
 
+    # Lottery ticket
 
     # Weight Initialization
     generator.apply(weight_init)
@@ -56,44 +59,67 @@ def train(args, dataloader_train, device, dataset_validation=None):
 
     save_dir = args.model_dir / 'saves'
     save_dir.mkdir(parents=True, exist_ok=True)
-    torch.save(generator, save_dir / f"/initial_state_dict_{args.prune_type}.pth.tar")
+    torch.save(generator, save_dir / f"initial_state_dict_{args.prune_type}.pth.tar")
     
-    
-    classifier = NeuralNetAMSM(args.emb_size, num_classes)
-
-    generator.train()
-    classifier.train()
-
-    generator = generator.to(device)
-    classifier = classifier.to(device)
+    # Making Initial Mask
+    mask, step = make_mask(generator)
 
     # Load the trained model if we continue from a checkpoint
     start_iteration = 0
     if args.checkpoint > 0:
         start_iteration = args.checkpoint
-        for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
+        for model, modelstr in [(generator, 'g')]:
             model.load_state_dict(torch.load(args.checkpoints_dir / f'{modelstr}_{args.checkpoint}.pt'))
     
     elif args.checkpoint == -1:
         start_iteration = max([int(filename.stem[2:]) for filename in args.checkpoints_dir().iterdir()])
-        for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
+        for model, modelstr in [(generator, 'g')]:
             model.load_state_dict(torch.load(args.checkpoints_dir / f'{modelstr}_{start_iteration}.pt'))
 
     # Optimizer definition
-    optimizer = torch.optim.SGD([{'params': generator.parameters(), 'lr': args.generator_lr},
-                                 {'params': classifier.parameters(), 'lr': args.classifier_lr}],
+    optimizer = torch.optim.SGD([{'params': generator.parameters(), 'lr': args.generator_lr}])
 
-    criterion = nn.CrossEntropyLoss()
-
-    # multi GPU support :
-    if args.multi_gpu:
-        dpp_generator = nn.DataParallel(generator).to(device)
+    criterion = nn.MSELoss() # nn.CosineEmbeddingLoss() #nn.CrossEntropyLoss()
     
     if dataset_validation is not None:
         best_eer = {v.name:{'eer':100, 'ite':-1} for v in dataset_validation.trials} # best eer of all iterations
 
     start = time.process_time()
+    pruned = False
+    comp1 = print_nonzeros(generator)
+
     for iterations in range(start_iteration, args.num_iterations + 1):
+
+        # Prune
+        if iterations == 0:
+            pruned = True
+            original_initialization(generator, mask, initial_state_dict)
+        elif iterations % args.prune_iterations == 0:
+            pruned = True
+            prune_by_percentile(generator, step, mask, args.prune_percent, resample=False, reinit=False)
+            for name, param in generator.named_parameters():
+                if 'weight' in name:
+                    weight_dev = param.device
+                    param.data = torch.from_numpy(param.data.cpu().numpy() * mask[step]).to(weight_dev)
+                    step = step + 1
+            step = 0
+        
+        if pruned:
+            pruned = False
+            print(f"\n--- Pruning Level [{iterations}/{args.prune_iterations}]: ---")
+            # Print the table of Nonzeros in each layer
+            comp1 = print_nonzeros(generator)
+            generator = generator.to(device)
+
+            # Optimizer definition
+            optimizer = torch.optim.SGD([{'params': generator.parameters(), 'lr': args.generator_lr}])
+
+            generator.train()
+
+            # multi GPU support :
+            if args.multi_gpu:
+                dpp_generator = nn.DataParallel(generator).to(device)   
+        
         # The current iteration is specified in the scheduler
         # Reduce the learning rate by the given factor (args.scheduler_lambda)
         if iterations in args.scheduler_steps:
@@ -112,15 +138,22 @@ def train(args, dataloader_train, device, dataset_validation=None):
             else:
                 embeds = generator(feats)
 
-            # Classify embeddings
-            preds = classifier(embeds, targets)
-
             # Calc the loss
-            loss = criterion(preds, targets)
+            y = torch.Tensor([1.0]).to(device)
+            loss = criterion(embeds, targets) # y
 
             # Backpropagation
             optimizer.zero_grad()
             loss.backward()
+
+            # Freezing Pruned weights by making their gradients Zero
+            for name, p in generator.named_parameters():
+                if 'weight' in name:
+                    tensor = p.data.cpu().numpy()
+                    grad_tensor = p.grad.data.cpu().numpy()
+                    grad_tensor = np.where(tensor < 1e-6, 0, grad_tensor)
+                    p.grad.data = torch.from_numpy(grad_tensor).to(device)
+
             optimizer.step()
             avg_loss += loss.item()
         
@@ -145,11 +178,15 @@ def train(args, dataloader_train, device, dataset_validation=None):
          # Saving checkpoint
         if iterations % args.checkpoint_interval == 0:
             
-            for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
+            for model, modelstr in [(generator, 'g')]:
                 model.eval().cpu()
                 cp_model_path = args.checkpoints_dir / f"{modelstr}_{iterations}.pt"
                 torch.save(model.state_dict(), cp_model_path)
                 model.to(device).train()
+
+            # Dumping mask
+            with open(save_dir / f"{iterations}_{args.prune_type}_mask_{comp1}.pkl", 'wb') as fp:
+                pickle.dump(mask, fp)
 
             # Testing the saved model
             if dataset_validation is not None:
@@ -169,10 +206,10 @@ def train(args, dataloader_train, device, dataset_validation=None):
             logger.info(f"Saved checkpoint at iteration {iterations}")
 
 
-    # Final model saving
-    for model, modelstr in [(generator, 'g'), (classifier, 'c')]:
-        model.eval().cpu()
-        cp_filename = "final_{}_{}.pt".format(modelstr, iterations)
-        cp_model_path = args.model_dir / cp_filename
-        torch.save(model.state_dict(), cp_model_path)
-    logger.success(f'Training complete in {time.process_time()-start} seconds')
+    # # Final model saving
+    # for model, modelstr in [(generator, 'g')]:
+    #     model.eval().cpu()
+    #     cp_filename = "final_{}_{}.pt".format(modelstr, iterations)
+    #     cp_model_path = args.model_dir / cp_filename
+    #     torch.save(model.state_dict(), cp_model_path)
+    # logger.success(f'Training complete in {time.process_time()-start} seconds')

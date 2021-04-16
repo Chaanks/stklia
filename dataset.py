@@ -24,7 +24,7 @@ MASTER_EMBS = '/local_disk/arges/jduret/git/stklia/exp/RESNET34_256_statistical/
 class SpeakerDataset(Dataset):
     """ Characterizes a dataset for Pytorch """
     def __init__(self, utt2path, utt2spk, spk2utt, loading_method, seq_len=None, evaluation=False, trials=None):
-
+        self.evaluation = evaluation
         self.utt2path = utt2path
         self.loading_method = loading_method
         self.utt_list = list(utt2spk.keys())
@@ -39,10 +39,9 @@ class SpeakerDataset(Dataset):
 
         self.uspkrs = self.label_enc.transform(self.uspkrs)
         self.utt2spk = OrderedDict({k: v for k, v in zip(self.utts, self.uspkrs)})
+        self.num_classes = len(self.label_enc.classes_)
 
         self.seq_len = seq_len
-        self.evaluation = evaluation
-        self.num_classes = len(self.label_enc.classes_)
 
         self.trans = data_io.test_transform if self.evaluation else data_io.train_transform
 
@@ -80,7 +79,48 @@ class SpeakerDataset(Dataset):
 
         return feats
 
-        
+class SpeakerDatasetEval(Dataset):
+    """ Characterizes a dataset for Pytorch """
+    def __init__(self, utt2path, utt2spk, spk2utt, loading_method, seq_len=None, evaluation=False, trials=None):
+        self.evaluation = evaluation
+        self.utt2path = utt2path
+        self.loading_method = loading_method
+        self.utt_list = list(utt2spk.keys())
+
+        self.utts, self.uspkrs = list(utt2spk.keys()), list(utt2spk.values())
+        self.spkrs, self.spkutts = list(spk2utt.keys()), list(spk2utt.values())
+        self.spk2utt = OrderedDict({k: v for k, v in zip(self.spkrs, self.spkutts)})
+        self.utt2spk = OrderedDict({k: v for k, v in zip(self.utts, self.uspkrs)})
+
+
+        self.seq_len = seq_len
+        self.trans = data_io.test_transform
+        self.trials = trials
+
+
+    def __repr__(self):
+        return f"SpeakerDataset w/ {len(self.spk2utt)} speakers and {len(self.utt2spk)} sessions. eval={self.evaluation}"
+
+    def __len__(self):
+        return len(self.utt_list)
+
+    def __getitem__(self, idx):
+        """ Returns one random utt of selected speaker """
+        utt = self.utt_list[idx]
+        feats = self.loading_method(self.utt2path[utt])
+
+        if self.seq_len:
+            feats = self.trans(feats, self.seq_len)
+
+        return feats, utt
+    
+    def get_utt_feats(self, utt):
+        feats = self.loading_method(self.utt2path[utt])
+        if self.seq_len:
+            feats = self.trans(feats, self.seq_len)
+
+        return feats
+
 class SpeakerDatasetMaster(Dataset):
     """ Characterizes a dataset for Pytorch """
     def __init__(self, utt2path, utt2spk, spk2utt, loading_method, seq_len=None, evaluation=False, trials=None):
@@ -186,6 +226,71 @@ def make_kaldi_ds(ds_path, seq_len=400, evaluation=False, trials=None):
                 spk2utt[spk] = utts
 
     ds = SpeakerDataset(
+        utt2path = utt2path,
+        utt2spk  = utt2spk,
+        spk2utt  = spk2utt,
+        loading_method = lambda path: torch.FloatTensor(read_mat(path)),
+        seq_len  = seq_len,
+        evaluation = evaluation,
+        trials=trials,
+    )
+    return ds
+
+def make_kaldi_ds_master(ds_path, seq_len=400, evaluation=False, trials=None):
+    """ 
+    Make a SpeakerDataset from only the path of the kaldi dataset.
+    This function will use the files 'feats.scp', 'utt2spk' 'spk2utt'
+    present in ds_path to create the SpeakerDataset.
+    """
+    if not isinstance(ds_path, list):
+        ds_path = [ds_path]
+    
+    utt2spk, spk2utt, utt2path = {}, {}, {}
+    for _ , path in enumerate(ds_path):
+        utt2path.update(data_io.read_scp(path / 'feats.scp'))
+        utt2spk.update(data_io.read_scp(path / 'utt2spk'))
+        # can't do spk2utt.update(t_spk2utt) as update is not additive
+        t_spk2utt = data_io.load_one_tomany(path / 'spk2utt')
+        for spk, utts in t_spk2utt.items():
+            try:
+                spk2utt[spk] += utts
+            except KeyError:
+                spk2utt[spk] = utts
+
+    ds = SpeakerDatasetMaster(
+        utt2path = utt2path,
+        utt2spk  = utt2spk,
+        spk2utt  = spk2utt,
+        loading_method = lambda path: torch.FloatTensor(read_mat(path)),
+        seq_len  = seq_len,
+        evaluation = evaluation,
+        trials=trials,
+    )
+    return ds
+
+#TODO: remove make_kaldi_ds_from_mul_path and add the feature in this make_kaldi_ds function
+def make_kaldi_ds_eval(ds_path, seq_len=400, evaluation=False, trials=None):
+    """ 
+    Make a SpeakerDataset from only the path of the kaldi dataset.
+    This function will use the files 'feats.scp', 'utt2spk' 'spk2utt'
+    present in ds_path to create the SpeakerDataset.
+    """
+    if not isinstance(ds_path, list):
+        ds_path = [ds_path]
+    
+    utt2spk, spk2utt, utt2path = {}, {}, {}
+    for _ , path in enumerate(ds_path):
+        utt2path.update(data_io.read_scp(path / 'feats.scp'))
+        utt2spk.update(data_io.read_scp(path / 'utt2spk'))
+        # can't do spk2utt.update(t_spk2utt) as update is not additive
+        t_spk2utt = data_io.load_one_tomany(path / 'spk2utt')
+        for spk, utts in t_spk2utt.items():
+            try:
+                spk2utt[spk] += utts
+            except KeyError:
+                spk2utt[spk] = utts
+
+    ds = SpeakerDatasetEval(
         utt2path = utt2path,
         utt2spk  = utt2spk,
         spk2utt  = spk2utt,

@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # TRAIN
     if args.mode == "train":
         assert args.train_data_path, "No training dataset given in train mode"
-        ds_train = dataset.make_kaldi_ds(args.train_data_path, seq_len=args.max_seq_len, evaluation=False, trials=None)
+        ds_train = dataset.make_kaldi_ds_master(args.train_data_path, seq_len=args.max_seq_len, evaluation=False, trials=None)
         dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True, num_workers=8)
 
         if args.eval_data_path and args.eval_trials_path:

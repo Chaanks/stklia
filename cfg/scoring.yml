@@ -1,9 +1,12 @@
-model_dir: /local_disk/arges/jduret/git/stklia/exp/CNN_256_statistical_student
+model_dir: /local_disk/arges/jduret/git/stklia/exp/RESNET18_256_statistical_student
 out_dir: /local_disk/arges/jduret/xvectors
 
 data:
   #voxceleb1: /local_disk/arges/jduret/kaldi/egs/voxceleb/fbank/data/voxceleb1_nosil
-  sitw: /local_disk/arges/jduret/kaldi/egs/sitw/fbank/data/sitw_dev_combined
+  #sitw: /local_disk/arges/jduret/kaldi/egs/sitw/fbank/data/sitw_dev_combined
+  sitw_test: /local_disk/arges/jduret/kaldi/egs/sitw/fbank/data/sitw_eval_test_nosil
+  sitw_enroll: /local_disk/arges/jduret/kaldi/egs/sitw/fbank/data/sitw_eval_enroll_nosil
+  
 
 trial:
   voxceleb1: /local_disk/arges/jduret/scoring/egs/voxceleb

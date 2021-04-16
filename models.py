@@ -379,18 +379,15 @@ class LightCNN(nn.Module):
         super(LightCNN, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1,bias=False)
         self.bn1 = nn.BatchNorm2d(32)
-
-        self.conv2 = conv3x3(32, 64)
+        self.conv2 = conv3x3(32, 64, stride=2)
         self.bn2 = nn.BatchNorm2d(64)
-
-        self.conv3 = conv3x3(64, 128)
+        self.conv3 = conv3x3(64, 128, stride=2)
         self.bn3 = nn.BatchNorm2d(128)
-        
         self.relu = nn.ReLU(inplace=True)
 
         self.pooling_mode = 'statistical'
         pooling_size = 2 if self.pooling_mode in ['statistical', 'std_skew', 'std_kurtosis']  else 1
-        self.fc = nn.Linear(128 * 61 * pooling_size, 256)
+        self.fc = nn.Linear(128 * math.ceil(61 * (0.5 ** (2))) * pooling_size, 256)
         self.bn4 = nn.BatchNorm1d(256)
 
     def forward(self, x):
