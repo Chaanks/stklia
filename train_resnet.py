@@ -76,7 +76,7 @@ def train(args, dataloader_train, device, dataset_validation=None):
                                 momentum=args.momentum)
 
     #criterion = nn.CrossEntropyLoss()
-    criterion = nn.MSELoss()
+    criterion = nn.CosineEmbeddingLoss() #nn.MSELoss()
 
     # multi GPU support :
     if args.multi_gpu:
@@ -109,7 +109,8 @@ def train(args, dataloader_train, device, dataset_validation=None):
             #preds = classifier(embeds, targets)
 
             # Calc the loss
-            loss = criterion(embeds, targets)
+            y = torch.Tensor([1.0]).to(device)
+            loss = criterion(embeds, targets, y)
 
             # Backpropagation
             optimizer.zero_grad()
