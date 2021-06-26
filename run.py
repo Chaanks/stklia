@@ -57,11 +57,11 @@ if __name__ == "__main__":
     # TRAIN
     if args.mode == "train":
         assert args.train_data_path, "No training dataset given in train mode"
-        ds_train = dataset.make_kaldi_ds(args.train_data_path, seq_len=args.max_seq_len, evaluation=False, trials=None)
+        ds_train = dataset.make_kaldi_ds(args.train_data_path, args.master_data_path, seq_len=args.max_seq_len, evaluation=False, trials=None)
         dl_train = DataLoader(ds_train, batch_size=args.batch_size, shuffle=True, num_workers=8)
 
         if args.eval_data_path and args.eval_trials_path:
-            ds_val = dataset.make_kaldi_ds(args.eval_data_path, seq_len=None, evaluation=True, trials=args.eval_trials_path)
+            ds_val = dataset.make_kaldi_ds(args.eval_data_path, args.master_data_path, seq_len=None, evaluation=True, trials=args.eval_trials_path)
         else:
             ds_val = None
             
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     # TEST
     if args.mode == "test":
         assert args.test_data_path and args.test_trials_path, "No test dataset or trials given in test mode"
-        ds_test = dataset.make_kaldi_ds(args.test_data_path, seq_len=None, evaluation=True, trials=args.test_trials_path)
+        ds_test = dataset.make_kaldi_ds(args.test_data_path,  args.master_data_path, seq_len=None, evaluation=True, trials=args.test_trials_path)
 
         # Load generator
         if args.checkpoint < 0:

@@ -19,7 +19,6 @@ from kaldi_io import read_mat, read_vec_flt
 from torch.utils.data import Dataset
 from sklearn.preprocessing import LabelEncoder
 
-MASTER_EMBS = '/local_disk/arges/jduret/git/stklia/exp/RESNET34_256_statistical/xvectors/train_combined_no_sil'
 
 class SpeakerDataset(Dataset):
     """ Characterizes a dataset for Pytorch """
@@ -83,7 +82,7 @@ class SpeakerDataset(Dataset):
         
 class SpeakerDatasetMaster(Dataset):
     """ Characterizes a dataset for Pytorch """
-    def __init__(self, utt2path, utt2spk, spk2utt, loading_method, seq_len=None, evaluation=False, trials=None):
+    def __init__(self, utt2path, utt2spk, spk2utt, loading_method, master, seq_len=None, evaluation=False, trials=None):
 
         self.utt2path = utt2path
         self.loading_method = loading_method
@@ -109,9 +108,8 @@ class SpeakerDatasetMaster(Dataset):
         self.trials = trials
         # assert (self.trials == None) and (evaluation == True), "No trials given while on eval mode"
 
-        ### Master Student
-
-        self.utt2embs = data_io.read_scp(Path(MASTER_EMBS) / 'xvectors.scp')
+        # Master Student
+        self.utt2embs = data_io.read_scp(master / 'xvectors.scp')
 
     def __repr__(self):
         return f"SpeakerDataset w/ {len(self.spk2utt)} speakers and {len(self.utt2spk)} sessions. eval={self.evaluation}"
@@ -164,7 +162,7 @@ def make_pytorch_ds(utt_list, utt2path_func, seq_len=400, evaluation=False, tria
     return ds
 
 #TODO: remove make_kaldi_ds_from_mul_path and add the feature in this make_kaldi_ds function
-def make_kaldi_ds(ds_path, seq_len=400, evaluation=False, trials=None):
+def make_kaldi_ds(ds_path, master, seq_len=400, evaluation=False, trials=None):
     """ 
     Make a SpeakerDataset from only the path of the kaldi dataset.
     This function will use the files 'feats.scp', 'utt2spk' 'spk2utt'
@@ -190,6 +188,7 @@ def make_kaldi_ds(ds_path, seq_len=400, evaluation=False, trials=None):
         utt2spk  = utt2spk,
         spk2utt  = spk2utt,
         loading_method = lambda path: torch.FloatTensor(read_mat(path)),
+        master = master,
         seq_len  = seq_len,
         evaluation = evaluation,
         trials=trials,
