@@ -162,7 +162,39 @@ def make_pytorch_ds(utt_list, utt2path_func, seq_len=400, evaluation=False, tria
     return ds
 
 #TODO: remove make_kaldi_ds_from_mul_path and add the feature in this make_kaldi_ds function
-def make_kaldi_ds(ds_path, master, seq_len=400, evaluation=False, trials=None):
+def make_kaldi_ds(ds_path, seq_len=400, evaluation=False, trials=None):
+    """ 
+    Make a SpeakerDataset from only the path of the kaldi dataset.
+    This function will use the files 'feats.scp', 'utt2spk' 'spk2utt'
+    present in ds_path to create the SpeakerDataset.
+    """
+    if not isinstance(ds_path, list):
+        ds_path = [ds_path]
+    
+    utt2spk, spk2utt, utt2path = {}, {}, {}
+    for _ , path in enumerate(ds_path):
+        utt2path.update(data_io.read_scp(path / 'feats.scp'))
+        utt2spk.update(data_io.read_scp(path / 'utt2spk'))
+        # can't do spk2utt.update(t_spk2utt) as update is not additive
+        t_spk2utt = data_io.load_one_tomany(path / 'spk2utt')
+        for spk, utts in t_spk2utt.items():
+            try:
+                spk2utt[spk] += utts
+            except KeyError:
+                spk2utt[spk] = utts
+
+    ds = SpeakerDataset(
+        utt2path = utt2path,
+        utt2spk  = utt2spk,
+        spk2utt  = spk2utt,
+        loading_method = lambda path: torch.FloatTensor(read_mat(path)),
+        seq_len  = seq_len,
+        evaluation = evaluation,
+        trials=trials,
+    )
+    return ds
+
+def make_kaldi_master_ds(ds_path, master, seq_len=400, evaluation=False, trials=None):
     """ 
     Make a SpeakerDataset from only the path of the kaldi dataset.
     This function will use the files 'feats.scp', 'utt2spk' 'spk2utt'
