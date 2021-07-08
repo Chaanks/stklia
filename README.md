@@ -1,8 +1,5 @@
 # STKLIA
 
-⚠️ **This is a work in progress, your feedback is welcomed** ⚠️  
-✅ Checkout our [trello](https://trello.com/b/MGHEfOjL) to see our current work.
-
 ## Trivia
 
 The overall pipeline for training a speaker representation network has two main components, which are referred to in this repo as a generator and a classifier. The generator is the network which actually produces the embedding:
