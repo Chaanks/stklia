@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-dataset.py: This file contains funtions to read kaldi files.
+data_io.py: This file contains funtions to read kaldi files.
 """
 
 __author__ = "Duret Jarod, Brignatz Vincent"
